@@ -2053,8 +2053,65 @@ Default: <strong>$50 per excess electron</strong>.
 System Fine per Excess Electron
 </label>
 
-<select id="systemFineRateInput">
-</select>
+<div class="warning-option-buttons">
+
+<button
+id="systemFine25Button"
+class="warning-option-button"
+onclick="setSystemFineRate(25)">
+$25 / e
+</button>
+
+<button
+id="systemFine50Button"
+class="warning-option-button selected"
+onclick="setSystemFineRate(50)">
+✓ $50 / e
+</button>
+
+<button
+id="systemFine75Button"
+class="warning-option-button"
+onclick="setSystemFineRate(75)">
+$75 / e
+</button>
+
+<button
+id="systemFine100Button"
+class="warning-option-button"
+onclick="setSystemFineRate(100)">
+$100 / e
+</button>
+
+<button
+id="systemFine125Button"
+class="warning-option-button"
+onclick="setSystemFineRate(125)">
+$125 / e
+</button>
+
+<button
+id="systemFine150Button"
+class="warning-option-button"
+onclick="setSystemFineRate(150)">
+$150 / e
+</button>
+
+<button
+id="systemFine175Button"
+class="warning-option-button"
+onclick="setSystemFineRate(175)">
+$175 / e
+</button>
+
+<button
+id="systemFine200Button"
+class="warning-option-button"
+onclick="setSystemFineRate(200)">
+$200 / e
+</button>
+
+</div>
 
 </div>
 
@@ -2095,21 +2152,30 @@ Default high-demand rate:
 High-Demand Electricity Rate
 </label>
 
-<select id="highDemandRateInput">
+<div class="warning-option-buttons">
 
-<option value="30" selected>
-$30 per electron
-</option>
+<button
+id="highDemand30Button"
+class="warning-option-button selected"
+onclick="setHighDemandRate(30)">
+✓ $30 / e
+</button>
 
-<option value="40">
-$40 per electron
-</option>
+<button
+id="highDemand40Button"
+class="warning-option-button"
+onclick="setHighDemandRate(40)">
+$40 / e
+</button>
 
-<option value="50">
-$50 per electron
-</option>
+<button
+id="highDemand50Button"
+class="warning-option-button"
+onclick="setHighDemandRate(50)">
+$50 / e
+</button>
 
-</select>
+</div>
 
 </div>
 
@@ -2827,6 +2893,12 @@ let selectedGamePolicies = {
 let policyRefinementVisible = false;
 
 
+let selectedSystemFineRate = 50;
+
+
+let selectedHighDemandRate = 30;
+
+
 let selectedSystemUpdateWarnings = {
 
     within10:true,
@@ -2838,66 +2910,130 @@ let selectedSystemUpdateWarnings = {
 };
 
 
-function initializePolicyRefinementOptions() {
+/* ============================================================
+   POLICY DESIGN RATE BUTTONS
+   ============================================================ */
 
-    const systemFineRateInput =
-        document.getElementById(
-            "systemFineRateInput"
-        );
+function setSystemFineRate(rate) {
 
-
-    systemFineRateInput.innerHTML = "";
-
-
-    /*
-     * System Fine options now use $25 increments.
-     *
-     * Available:
-     * $25, $50, $75, $100,
-     * $125, $150, $175, $200.
-     *
-     * $50 remains the default.
-     */
-
-    for(
-        let amount=25;
-        amount<=200;
-        amount+=25
-    ) {
-
-        const option =
-            document.createElement(
-                "option"
-            );
+    selectedSystemFineRate =
+        rate;
 
 
-        option.value =
-            amount;
-
-
-        option.innerText =
-            `$${amount} per excess electron`;
-
-
-        if(amount === 50) {
-
-            option.selected =
-                true;
-
-        }
-
-
-        systemFineRateInput.appendChild(
-            option
-        );
-
-    }
+    updateSystemFineRateButtons();
 
 }
 
 
-initializePolicyRefinementOptions();
+function updateSystemFineRateButtons() {
 
+    const fineRates = [
+        25,
+        50,
+        75,
+        100,
+        125,
+        150,
+        175,
+        200
+    ];
+
+
+    fineRates.forEach(rate=>{
+
+        const button =
+            document.getElementById(
+                `systemFine${rate}Button`
+            );
+
+
+        if(!button) {
+
+            return;
+
+        }
+
+
+        const selected =
+            selectedSystemFineRate ===
+            rate;
+
+
+        button.classList.toggle(
+            "selected",
+            selected
+        );
+
+
+        button.innerText =
+            selected
+                ? `✓ $${rate} / e`
+                : `$${rate} / e`;
+
+    });
+
+}
+
+
+function setHighDemandRate(rate) {
+
+    selectedHighDemandRate =
+        rate;
+
+
+    updateHighDemandRateButtons();
+
+}
+
+
+function updateHighDemandRateButtons() {
+
+    const rates = [
+        30,
+        40,
+        50
+    ];
+
+
+    rates.forEach(rate=>{
+
+        const button =
+            document.getElementById(
+                `highDemand${rate}Button`
+            );
+
+
+        if(!button) {
+
+            return;
+
+        }
+
+
+        const selected =
+            selectedHighDemandRate ===
+            rate;
+
+
+        button.classList.toggle(
+            "selected",
+            selected
+        );
+
+
+        button.innerText =
+            selected
+                ? `✓ $${rate} / e`
+                : `$${rate} / e`;
+
+    });
+
+}
+
+
+/* ============================================================
+   GAME POLICY BUTTONS
+   ============================================================ */
 
 function setNoPolicies() {
 
@@ -3805,19 +3941,11 @@ async function commenceGridSimulation() {
 
 
     state.systemFineRate =
-        parseInt(
-            document.getElementById(
-                "systemFineRateInput"
-            ).value
-        ) || 50;
+        selectedSystemFineRate;
 
 
     state.highDemandRate =
-        parseInt(
-            document.getElementById(
-                "highDemandRateInput"
-            ).value
-        ) || 30;
+        selectedHighDemandRate;
 
 
     state.normalElectricityRate =
