@@ -1750,34 +1750,58 @@ hidden from players during gameplay.
 color:var(--text-muted);
 font-size:0.9rem;">
 
-Choose the policy that will govern neighborhood
-electricity use during gameplay.
+Select the policies that will govern neighborhood
+electricity use during gameplay. Multiple policies
+may be active at the same time.
 
 </p>
 
-<div class="setup-field">
 
-<label>
-Game Policy
-</label>
+<div class="mode-buttons">
 
-<select id="gamePolicyInput">
+<button
+id="noPoliciesButton"
+class="mode-button selected"
+onclick="setNoPolicies()">
 
-<option value="none">
-No Policies
-</option>
+🚫 No Policies
 
-<option
-value="systemFines"
-selected>
-System Fines for Exceeding Capacity
-</option>
+</button>
 
-<option value="flexibleBilling">
-Flexible Billing Rates
-</option>
 
-</select>
+<button
+id="systemFinesPolicyButton"
+class="mode-button"
+onclick="toggleGamePolicy('systemFines')">
+
+⚠️ System Fines for Exceeding Capacity
+
+</button>
+
+
+<button
+id="flexibleBillingPolicyButton"
+class="mode-button"
+onclick="toggleGamePolicy('flexibleBilling')">
+
+💡 Flexible Billing Rates
+
+</button>
+
+</div>
+
+
+<div style="
+margin-top:15px;
+font-size:0.8rem;
+color:var(--text-muted);">
+
+<strong>No Policies</strong> is the default.
+
+<br><br>
+
+System Fines and Flexible Billing may be selected
+individually or together.
 
 </div>
 
@@ -2082,7 +2106,9 @@ let state = {
 
     upgradeRequired:false,
 
-    gamePolicy:"systemFines",
+    systemFinesEnabled:false,
+
+    flexibleBillingEnabled:false,
 
     electricityRate:20,
 
@@ -2390,8 +2416,7 @@ async function showConfirmation(
 function resetFlexibleBillingRate(reason = "") {
 
     if(
-        state.gamePolicy !==
-        "flexibleBilling"
+        !state.flexibleBillingEnabled
     ) {
 
         return;
@@ -2427,8 +2452,7 @@ function evaluateFlexibleBilling(
 ) {
 
     if(
-        state.gamePolicy !==
-        "flexibleBilling"
+        !state.flexibleBillingEnabled
     ) {
 
         state.electricityRate = 20;
@@ -2886,7 +2910,7 @@ async function promptRoundSettlement() {
 
 
     const rateNotice =
-        state.gamePolicy === "flexibleBilling"
+        state.flexibleBillingEnabled
             ? `
 
                 <li>
@@ -3035,6 +3059,99 @@ function setSetupMode(mode) {
         randomButton.classList.add("selected");
 
     }
+
+}
+
+
+/* ============================================================
+   GAME POLICY SELECTION
+   ============================================================ */
+
+let selectedGamePolicies = {
+
+    systemFines:false,
+
+    flexibleBilling:false
+
+};
+
+
+function updateGamePolicyButtons() {
+
+    const noPoliciesButton =
+        document.getElementById(
+            "noPoliciesButton"
+        );
+
+    const systemFinesButton =
+        document.getElementById(
+            "systemFinesPolicyButton"
+        );
+
+    const flexibleBillingButton =
+        document.getElementById(
+            "flexibleBillingPolicyButton"
+        );
+
+
+    const noPoliciesActive =
+        !selectedGamePolicies.systemFines &&
+        !selectedGamePolicies.flexibleBilling;
+
+
+    noPoliciesButton.classList.toggle(
+        "selected",
+        noPoliciesActive
+    );
+
+
+    systemFinesButton.classList.toggle(
+        "selected",
+        selectedGamePolicies.systemFines
+    );
+
+
+    flexibleBillingButton.classList.toggle(
+        "selected",
+        selectedGamePolicies.flexibleBilling
+    );
+
+}
+
+
+function setNoPolicies() {
+
+    selectedGamePolicies.systemFines =
+        false;
+
+    selectedGamePolicies.flexibleBilling =
+        false;
+
+
+    updateGamePolicyButtons();
+
+}
+
+
+function toggleGamePolicy(policy) {
+
+    if(policy === "systemFines") {
+
+        selectedGamePolicies.systemFines =
+            !selectedGamePolicies.systemFines;
+
+    }
+
+
+    else if(policy === "flexibleBilling") {
+
+        selectedGamePolicies.flexibleBilling =
+            !selectedGamePolicies.flexibleBilling;
+
+    }
+
+
+    updateGamePolicyButtons();
 
 }
 
@@ -3562,10 +3679,12 @@ async function commenceGridSimulation() {
     }
 
 
-    state.gamePolicy =
-        document.getElementById(
-            "gamePolicyInput"
-        ).value;
+    state.systemFinesEnabled =
+        selectedGamePolicies.systemFines;
+
+
+    state.flexibleBillingEnabled =
+        selectedGamePolicies.flexibleBilling;
 
 
     state.electricityRate = 20;
@@ -3634,32 +3753,56 @@ async function commenceGridSimulation() {
     );
 
 
-    if(state.gamePolicy === "systemFines") {
-
-        appendLog(
-            "Game Policy: System Fines for Exceeding Capacity."
-        );
-
-    }
-
-    else if(
-        state.gamePolicy ===
-        "flexibleBilling"
+    if(
+        !state.systemFinesEnabled &&
+        !state.flexibleBillingEnabled
     ) {
 
         appendLog(
-            "Game Policy: Flexible Billing Rates. " +
-            "Utility electricity costs $20/e normally and rises to $30/e " +
-            "when neighborhood demand comes within 10e of grid capacity."
+            "Game Policies: No Policies."
         );
 
     }
 
     else {
 
+        const activePolicies = [];
+
+
+        if(state.systemFinesEnabled) {
+
+            activePolicies.push(
+                "System Fines for Exceeding Capacity"
+            );
+
+        }
+
+
+        if(state.flexibleBillingEnabled) {
+
+            activePolicies.push(
+                "Flexible Billing Rates"
+            );
+
+        }
+
+
         appendLog(
-            "Game Policy: No Policies. Over-capacity purchases will not receive system fines."
+            `Game Policies Active: ${
+                activePolicies.join(" + ")
+            }.`
         );
+
+
+        if(state.flexibleBillingEnabled) {
+
+            appendLog(
+                "Flexible Billing: Utility electricity costs $20/e normally " +
+                "and rises to $30/e when neighborhood demand comes within " +
+                "10e of grid capacity."
+            );
+
+        }
 
     }
 
@@ -4259,182 +4402,135 @@ async function showBrownoutEvent(
     happinessUsed
 ) {
 
-    const systemFinesActive =
-        state.gamePolicy ===
-        "systemFines";
+    let financialSection = "";
 
 
-    const financialSection =
-        systemFinesActive
+    if(state.systemFinesEnabled) {
 
-        ? `
+        financialSection += `
 
-        <div class="modal-financial-grid">
+            <div class="modal-financial-grid">
 
-            <div class="modal-financial-item">
+                <div class="modal-financial-item">
 
-                <div class="modal-financial-label">
-                    System Fine
+                    <div class="modal-financial-label">
+                        System Fine
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--danger);">
+
+                        $${fineAmount.toLocaleString()}
+
+                    </div>
+
                 </div>
 
-                <div class="modal-financial-value"
-                     style="color:var(--danger);">
 
-                    $${fineAmount.toLocaleString()}
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Happiness Deduction
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:#a855f7;">
+
+                        ${
+                            happinessUsed > 0
+                                ? `-${happinessUsed} 😊`
+                                : "None"
+                        }
+
+                    </div>
 
                 </div>
 
             </div>
 
 
-            <div class="modal-financial-item">
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);
+                font-size:0.85rem;">
 
-                <div class="modal-financial-label">
-                    Happiness Deduction
-                </div>
+                If the player cannot cover the
+                entire fine, the remaining amount is converted
+                into Happiness Points at a rate of
+                <strong>$50 per point</strong>, rounded up.
 
-                <div class="modal-financial-value"
-                     style="color:#a855f7;">
+            </div>
 
-                    ${
-                        happinessUsed > 0
-                            ? `-${happinessUsed} 😊`
-                            : "None"
-                    }
+        `;
+
+    }
+
+    else {
+
+        financialSection += `
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        System Fine
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--success);">
+
+                        None
+
+                    </div>
 
                 </div>
 
             </div>
 
-        </div>
+        `;
 
+    }
+
+
+    if(state.flexibleBillingEnabled) {
+
+        financialSection += `
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);
+                font-size:0.85rem;">
+
+                💡 <strong>Flexible Billing Rates</strong>
+                is also active.
+
+                The current utility electricity rate is
+                <strong>
+                    $${state.electricityRate}/electron
+                </strong>.
+
+            </div>
+
+        `;
+
+    }
+
+
+    financialSection += `
 
         <div style="
             margin-top:15px;
             color:var(--text-muted);
             font-size:0.85rem;">
 
-            If the player cannot cover the
-            entire fine, the remaining amount is converted
-            into Happiness Points at a rate of
-            <strong>$50 per point</strong>, rounded up.
+            The brownout still requires the neighborhood
+            to address grid capacity. Grid expansion rules
+            and associated grid fees continue to apply.
 
         </div>
 
-        `
-
-        : state.gamePolicy === "flexibleBilling"
-
-            ? `
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        System Fine
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:var(--success);">
-
-                        None
-
-                    </div>
-
-                </div>
-
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Active Policy
-                    </div>
-
-                    <div class="modal-financial-value">
-
-                        Flexible Billing
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div style="
-                margin-top:15px;
-                color:var(--text-muted);
-                font-size:0.85rem;">
-
-                Flexible Billing does not impose an
-                over-capacity system fine.
-
-                <br><br>
-
-                The brownout still occurs and grid-capacity
-                expansion rules and associated grid fees
-                still apply.
-
-            </div>
-
-            `
-
-            : `
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        System Fine
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:var(--success);">
-
-                        None
-
-                    </div>
-
-                </div>
-
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Active Policy
-                    </div>
-
-                    <div class="modal-financial-value">
-
-                        No Policies
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div style="
-                margin-top:15px;
-                color:var(--text-muted);
-                font-size:0.85rem;">
-
-                The <strong>No Policies</strong> setting means
-                the player receives no financial penalty for
-                causing demand to exceed grid capacity.
-
-                <br><br>
-
-                The brownout still occurs, and any required
-                <strong>grid capacity expansion and associated
-                grid fees still apply</strong>.
-
-            </div>
-
-            `;
+    `;
 
 
     await showMessage(
@@ -4967,8 +5063,7 @@ async function buyCard(
 
 
             if(
-                state.gamePolicy ===
-                "systemFines"
+                state.systemFinesEnabled
             ) {
 
                 fineAmount =
@@ -4988,8 +5083,7 @@ async function buyCard(
 
                 appendLog(
                     `📜 ${p.name} received no system fine ` +
-                    `for exceeding grid capacity by ${excess}e ` +
-                    `under the active game policy.`
+                    `for exceeding grid capacity by ${excess}e.`
                 );
 
             }
@@ -5092,8 +5186,7 @@ async function buyCard(
          */
 
         if(
-            state.gamePolicy ===
-            "flexibleBilling"
+            state.flexibleBillingEnabled
         ) {
 
             resetFlexibleBillingRate(
@@ -5471,8 +5564,7 @@ async function applyGridUpgrade() {
      */
 
     if(
-        state.gamePolicy ===
-        "flexibleBilling"
+        state.flexibleBillingEnabled
     ) {
 
         resetFlexibleBillingRate(
@@ -5513,8 +5605,7 @@ async function applyGridUpgrade() {
 
 
     if(
-        state.gamePolicy ===
-        "flexibleBilling"
+        state.flexibleBillingEnabled
     ) {
 
         evaluateSystemDemand(false);
@@ -5634,7 +5725,7 @@ async function executeRoundEndPayments() {
          */
 
         const utilityRate =
-            state.gamePolicy === "flexibleBilling"
+            state.flexibleBillingEnabled
                 ? state.electricityRate
                 : 20;
 
@@ -5747,7 +5838,7 @@ async function executeRoundEndPayments() {
             been added to their Accumulated Happiness.
 
             ${
-                state.gamePolicy === "flexibleBilling"
+                state.flexibleBillingEnabled
                     ? `
 
                     <br><br>
@@ -5824,7 +5915,7 @@ async function executeRoundEndPayments() {
 
 
                     ${
-                        state.gamePolicy === "flexibleBilling"
+                        state.flexibleBillingEnabled
                             ? `
 
                             <span>
@@ -6599,7 +6690,7 @@ function updateUserInterface() {
 
 
         const flexibleBillingSummary =
-            state.gamePolicy === "flexibleBilling"
+            state.flexibleBillingEnabled
                 ? `
 
                 <div class="payment-row">
