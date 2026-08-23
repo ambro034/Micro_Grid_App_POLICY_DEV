@@ -389,12 +389,16 @@ button.action-btn:hover {
     gap: 10px;
 
     margin-top: 15px;
+
+    flex-wrap: wrap;
 }
 
 
 .mode-button {
 
     flex: 1;
+
+    min-width: 180px;
 
     background: #334155;
 
@@ -466,6 +470,133 @@ button.action-btn:hover {
     color: var(--text-muted);
 
     margin-bottom: 5px;
+}
+
+
+/* ============================================================
+   POLICY REFINEMENT
+   ============================================================ */
+
+.policy-refine-button {
+
+    width: 100%;
+
+    margin-top: 18px;
+
+    background: #334155;
+
+    color: white;
+
+    border: 2px solid var(--border);
+}
+
+
+.policy-refine-button.selected {
+
+    background: var(--purple);
+
+    border-color: var(--purple);
+
+    color: white;
+}
+
+
+.policy-refinement-container {
+
+    display: none;
+
+    margin-top: 15px;
+
+    padding: 15px;
+
+    background: #111827;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+}
+
+
+.policy-refinement-container.visible {
+
+    display: block;
+}
+
+
+.policy-refinement-panel {
+
+    display: none;
+
+    background: #0f172a;
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    padding: 15px;
+
+    margin-top: 12px;
+}
+
+
+.policy-refinement-panel.visible {
+
+    display: block;
+}
+
+
+.policy-refinement-title {
+
+    font-weight: 800;
+
+    color: var(--primary);
+
+    margin-bottom: 8px;
+}
+
+
+.policy-refinement-description {
+
+    color: var(--text-muted);
+
+    font-size: 0.85rem;
+
+    line-height: 1.5;
+
+    margin-bottom: 12px;
+}
+
+
+.warning-option-buttons {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(160px, 1fr));
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+
+.warning-option-button {
+
+    background: #334155;
+
+    color: white;
+
+    border: 2px solid var(--border);
+}
+
+
+.warning-option-button.selected {
+
+    background: var(--success);
+
+    color: #062e25;
+
+    border-color: var(--success);
 }
 
 
@@ -1126,8 +1257,6 @@ button.action-btn:hover {
 .modal-overlay.visible {
 
     display: flex;
-
-    animation: modalFadeIn 0.18s ease-out;
 }
 
 
@@ -1153,8 +1282,6 @@ button.action-btn:hover {
         0 0 30px rgba(56,189,248,0.08);
 
     overflow: hidden;
-
-    animation: modalSlideIn 0.2s ease-out;
 
     display: flex;
 
@@ -1328,22 +1455,6 @@ button.action-btn:hover {
 }
 
 
-.modal-input {
-
-    margin-top: 15px;
-
-    background: #0b1220;
-
-    border: 1px solid var(--border);
-
-    color: white;
-
-    width: 100%;
-
-    box-sizing: border-box;
-}
-
-
 .modal-event {
 
     border-left: 4px solid var(--primary);
@@ -1446,6 +1557,10 @@ button.action-btn:hover {
         flex-direction: column;
     }
 
+    .mode-button {
+        min-width: 0;
+    }
+
     .scorecard-table {
         font-size: 0.75rem;
     }
@@ -1472,7 +1587,6 @@ button.action-btn:hover {
 
 <body>
 
-
 <div class="container">
 
 <h1>⚡ Neighborhood Micro-Grid Manager ⚡</h1>
@@ -1496,9 +1610,7 @@ Current Round
 id="dispRound"
 class="dash-val"
 style="color:var(--primary);">
-
 1
-
 </div>
 
 </div>
@@ -1515,9 +1627,7 @@ Total Demand vs Capacity
 <div
 id="dispDemand"
 class="dash-val">
-
 0 / 50 e
-
 </div>
 
 </div>
@@ -1532,9 +1642,7 @@ Active System Fees
 <div
 id="dispFees"
 class="dash-val">
-
 $0 / rd
-
 </div>
 
 </div>
@@ -1843,6 +1951,215 @@ Policies may be selected individually or in any combination.
 
 </div>
 
+
+<button
+id="refinePoliciesButton"
+class="policy-refine-button"
+onclick="togglePolicyRefinement()">
+
+🛠️ Refine the Design of Your Policies
+
+</button>
+
+
+<div
+id="policyRefinementContainer"
+class="policy-refinement-container">
+
+<div style="
+font-weight:800;
+color:var(--purple);
+margin-bottom:5px;">
+
+🛠️ Policy Design Options
+
+</div>
+
+
+<div
+id="noPolicyRefinementMessage"
+style="
+display:none;
+color:var(--text-muted);
+font-size:0.85rem;
+padding:10px 0;">
+
+Select at least one Game Policy above to refine its design.
+
+</div>
+
+
+<!-- SYSTEM FINES REFINEMENT -->
+
+<div
+id="systemFinesRefinement"
+class="policy-refinement-panel">
+
+<div class="policy-refinement-title">
+⚠️ System Fines for Exceeding Capacity
+</div>
+
+<div class="policy-refinement-description">
+
+Choose the fine charged for each electron by which a
+purchase exceeds the grid's available capacity.
+
+<br><br>
+
+Default: <strong>$50 per excess electron</strong>.
+
+</div>
+
+
+<div class="setup-field">
+
+<label>
+System Fine per Excess Electron
+</label>
+
+<select id="systemFineRateInput">
+</select>
+
+</div>
+
+</div>
+
+
+<!-- FLEXIBLE BILLING REFINEMENT -->
+
+<div
+id="flexibleBillingRefinement"
+class="policy-refinement-panel">
+
+<div class="policy-refinement-title">
+💡 Flexible Billing Rates
+</div>
+
+<div class="policy-refinement-description">
+
+The normal electricity rate is fixed at
+<strong>$20 per electron</strong>.
+
+<br><br>
+
+When neighborhood demand comes within 10e of grid
+capacity, the selected high-demand rate will apply.
+
+<br><br>
+
+Default high-demand rate:
+<strong>$30 per electron</strong>.
+
+</div>
+
+
+<div class="setup-field">
+
+<label>
+High-Demand Electricity Rate
+</label>
+
+<select id="highDemandRateInput">
+
+<option value="30" selected>
+$30 per electron
+</option>
+
+<option value="40">
+$40 per electron
+</option>
+
+<option value="50">
+$50 per electron
+</option>
+
+</select>
+
+</div>
+
+</div>
+
+
+<!-- SYSTEM UPDATES REFINEMENT -->
+
+<div
+id="systemUpdatesRefinement"
+class="policy-refinement-panel">
+
+<div class="policy-refinement-title">
+📢 System Updates for Customers
+</div>
+
+<div class="policy-refinement-description">
+
+Choose which pre-purchase system warnings customers
+receive.
+
+<br><br>
+
+If more than one enabled warning applies to a purchase,
+only the <strong>most severe applicable warning</strong>
+will be shown.
+
+</div>
+
+
+<div class="warning-option-buttons">
+
+<button
+id="warning10Button"
+class="warning-option-button selected"
+onclick="toggleSystemUpdateWarning('within10')">
+
+✓ Within 10e Warning
+
+</button>
+
+
+<button
+id="warning5Button"
+class="warning-option-button selected"
+onclick="toggleSystemUpdateWarning('within5')">
+
+✓ Within 5e Warning
+
+</button>
+
+
+<button
+id="warningBrownoutButton"
+class="warning-option-button selected"
+onclick="toggleSystemUpdateWarning('brownoutBlackout')">
+
+✓ Brownout / Blackout Warning
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- SERVICE DISCONNECTION REFINEMENT -->
+
+<div
+id="serviceDisconnectionRefinement"
+class="policy-refinement-panel">
+
+<div class="policy-refinement-title">
+🔌 Service Disconnection
+</div>
+
+<div class="policy-refinement-description">
+
+There are no aspects of this policy to refine.
+
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 
@@ -2036,17 +2353,13 @@ aria-modal="true">
 <div
 id="modalIcon"
 class="modal-icon">
-
 ⚡
-
 </div>
 
 <div
 id="modalTitle"
 class="modal-title">
-
 System Message
-
 </div>
 
 </div>
@@ -2055,14 +2368,12 @@ System Message
 <div
 id="modalBody"
 class="modal-body">
-
 </div>
 
 
 <div
 id="modalFooter"
 class="modal-footer">
-
 </div>
 
 </div>
@@ -2152,9 +2463,29 @@ let state = {
 
     serviceDisconnectionEnabled:false,
 
+    /*
+     * Dynamic policy-design settings.
+     */
+
+    systemFineRate:50,
+
+    normalElectricityRate:20,
+
+    highDemandRate:30,
+
     electricityRate:20,
 
     highDemandActive:false,
+
+    systemUpdateWarnings:{
+
+        within10:true,
+
+        within5:true,
+
+        brownoutBlackout:true
+
+    },
 
     landfill:[],
 
@@ -2199,9 +2530,7 @@ function openGameModal({
             className:"primary",
             value:true
         }
-    ],
-
-    input = null
+    ]
 
 } = {}) {
 
@@ -2227,43 +2556,6 @@ function openGameModal({
 
     modalBody.innerHTML = body;
 
-
-    if(input) {
-
-        const inputElement =
-            document.createElement("input");
-
-        inputElement.className =
-            "modal-input";
-
-        inputElement.type =
-            input.type || "number";
-
-        inputElement.placeholder =
-            input.placeholder || "";
-
-        inputElement.value =
-            input.value ?? "";
-
-        inputElement.min =
-            input.min ?? "";
-
-        inputElement.max =
-            input.max ?? "";
-
-        inputElement.step =
-            input.step ?? "1";
-
-        inputElement.id =
-            "modalInputField";
-
-        modalBody.appendChild(
-            inputElement
-        );
-
-    }
-
-
     modalFooter.innerHTML = "";
 
 
@@ -2282,31 +2574,11 @@ function openGameModal({
 
         button.onclick = () => {
 
-            let value =
+            const value =
                 buttonData.value;
 
-            if(input) {
-
-                const field =
-                    document.getElementById(
-                        "modalInputField"
-                    );
-
-                value = {
-
-                    action:
-                        buttonData.value,
-
-                    input:
-                        field
-                            ? field.value
-                            : ""
-
-                };
-
-            }
-
             closeGameModal();
+
 
             if(modalResolver) {
 
@@ -2330,28 +2602,6 @@ function openGameModal({
 
 
     overlay.classList.add("visible");
-
-
-    setTimeout(() => {
-
-        if(input) {
-
-            const field =
-                document.getElementById(
-                    "modalInputField"
-                );
-
-            if(field) {
-
-                field.focus();
-
-                field.select();
-
-            }
-
-        }
-
-    },50);
 
 
     return new Promise(resolve => {
@@ -2454,35 +2704,70 @@ async function showConfirmation(
 
 
 /* ============================================================
-   FLEXIBLE BILLING HELPERS
+   SETUP MODE
    ============================================================ */
 
-function resetFlexibleBillingRate(reason = "") {
+let setupMode = "manual";
 
-    if(
-        !state.flexibleBillingEnabled
-    ) {
 
-        return;
+function setSetupMode(mode) {
+
+    setupMode = mode;
+
+
+    const manual =
+        document.getElementById(
+            "manualSetup"
+        );
+
+    const random =
+        document.getElementById(
+            "randomSetup"
+        );
+
+    const manualButton =
+        document.getElementById(
+            "manualModeButton"
+        );
+
+    const randomButton =
+        document.getElementById(
+            "randomModeButton"
+        );
+
+
+    if(mode === "manual") {
+
+        manual.style.display =
+            "block";
+
+        random.style.display =
+            "none";
+
+        manualButton.classList.add(
+            "selected"
+        );
+
+        randomButton.classList.remove(
+            "selected"
+        );
 
     }
 
+    else {
 
-    const wasHighDemand =
-        state.highDemandActive ||
-        state.electricityRate !== 20;
+        manual.style.display =
+            "none";
 
+        random.style.display =
+            "block";
 
-    state.electricityRate = 20;
+        manualButton.classList.remove(
+            "selected"
+        );
 
-    state.highDemandActive = false;
-
-
-    if(wasHighDemand) {
-
-        appendLog(
-            `💡 Flexible Billing rate reset to the normal $20/e` +
-            `${reason ? ` ${reason}` : ""}.`
+        randomButton.classList.add(
+            "selected"
         );
 
     }
@@ -2490,55 +2775,1251 @@ function resetFlexibleBillingRate(reason = "") {
 }
 
 
-function evaluateFlexibleBilling(
-    currentLoad,
-    allowHighDemandTrigger = true
+/* ============================================================
+   POLICY SELECTION
+   ============================================================ */
+
+let selectedGamePolicies = {
+
+    systemFines:false,
+
+    flexibleBilling:false,
+
+    systemUpdates:false,
+
+    serviceDisconnection:false
+
+};
+
+
+let policyRefinementVisible = false;
+
+
+let selectedSystemUpdateWarnings = {
+
+    within10:true,
+
+    within5:true,
+
+    brownoutBlackout:true
+
+};
+
+
+function initializePolicyRefinementOptions() {
+
+    const systemFineRateInput =
+        document.getElementById(
+            "systemFineRateInput"
+        );
+
+
+    systemFineRateInput.innerHTML = "";
+
+
+    for(
+        let amount=10;
+        amount<=200;
+        amount+=10
+    ) {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value =
+            amount;
+
+
+        option.innerText =
+            `$${amount} per excess electron`;
+
+
+        if(amount === 50) {
+
+            option.selected =
+                true;
+
+        }
+
+
+        systemFineRateInput.appendChild(
+            option
+        );
+
+    }
+
+}
+
+
+initializePolicyRefinementOptions();
+
+
+function setNoPolicies() {
+
+    selectedGamePolicies.systemFines =
+        false;
+
+    selectedGamePolicies.flexibleBilling =
+        false;
+
+    selectedGamePolicies.systemUpdates =
+        false;
+
+    selectedGamePolicies.serviceDisconnection =
+        false;
+
+
+    updateGamePolicyButtons();
+
+    updatePolicyRefinementVisibility();
+
+}
+
+
+function toggleGamePolicy(policy) {
+
+    selectedGamePolicies[policy] =
+        !selectedGamePolicies[policy];
+
+
+    updateGamePolicyButtons();
+
+    updatePolicyRefinementVisibility();
+
+}
+
+
+function updateGamePolicyButtons() {
+
+    const noPoliciesActive =
+        !selectedGamePolicies.systemFines &&
+        !selectedGamePolicies.flexibleBilling &&
+        !selectedGamePolicies.systemUpdates &&
+        !selectedGamePolicies.serviceDisconnection;
+
+
+    document
+        .getElementById(
+            "noPoliciesButton"
+        )
+        .classList.toggle(
+            "selected",
+            noPoliciesActive
+        );
+
+
+    document
+        .getElementById(
+            "systemFinesPolicyButton"
+        )
+        .classList.toggle(
+            "selected",
+            selectedGamePolicies.systemFines
+        );
+
+
+    document
+        .getElementById(
+            "flexibleBillingPolicyButton"
+        )
+        .classList.toggle(
+            "selected",
+            selectedGamePolicies.flexibleBilling
+        );
+
+
+    document
+        .getElementById(
+            "systemUpdatesPolicyButton"
+        )
+        .classList.toggle(
+            "selected",
+            selectedGamePolicies.systemUpdates
+        );
+
+
+    document
+        .getElementById(
+            "serviceDisconnectionPolicyButton"
+        )
+        .classList.toggle(
+            "selected",
+            selectedGamePolicies.serviceDisconnection
+        );
+
+}
+
+
+/* ============================================================
+   POLICY REFINEMENT
+   ============================================================ */
+
+function togglePolicyRefinement() {
+
+    policyRefinementVisible =
+        !policyRefinementVisible;
+
+
+    document
+        .getElementById(
+            "refinePoliciesButton"
+        )
+        .classList.toggle(
+            "selected",
+            policyRefinementVisible
+        );
+
+
+    updatePolicyRefinementVisibility();
+
+}
+
+
+function updatePolicyRefinementVisibility() {
+
+    const container =
+        document.getElementById(
+            "policyRefinementContainer"
+        );
+
+
+    container.classList.toggle(
+        "visible",
+        policyRefinementVisible
+    );
+
+
+    if(!policyRefinementVisible) {
+
+        return;
+
+    }
+
+
+    const anyPolicySelected =
+        selectedGamePolicies.systemFines ||
+        selectedGamePolicies.flexibleBilling ||
+        selectedGamePolicies.systemUpdates ||
+        selectedGamePolicies.serviceDisconnection;
+
+
+    document.getElementById(
+        "noPolicyRefinementMessage"
+    ).style.display =
+        anyPolicySelected
+            ? "none"
+            : "block";
+
+
+    document
+        .getElementById(
+            "systemFinesRefinement"
+        )
+        .classList.toggle(
+            "visible",
+            selectedGamePolicies.systemFines
+        );
+
+
+    document
+        .getElementById(
+            "flexibleBillingRefinement"
+        )
+        .classList.toggle(
+            "visible",
+            selectedGamePolicies.flexibleBilling
+        );
+
+
+    document
+        .getElementById(
+            "systemUpdatesRefinement"
+        )
+        .classList.toggle(
+            "visible",
+            selectedGamePolicies.systemUpdates
+        );
+
+
+    document
+        .getElementById(
+            "serviceDisconnectionRefinement"
+        )
+        .classList.toggle(
+            "visible",
+            selectedGamePolicies.serviceDisconnection
+        );
+
+}
+
+
+function toggleSystemUpdateWarning(
+    warningType
 ) {
 
-    if(
-        !state.flexibleBillingEnabled
+    selectedSystemUpdateWarnings[
+        warningType
+    ] =
+        !selectedSystemUpdateWarnings[
+            warningType
+        ];
+
+
+    updateSystemUpdateWarningButtons();
+
+}
+
+
+function updateSystemUpdateWarningButtons() {
+
+    document
+        .getElementById(
+            "warning10Button"
+        )
+        .classList.toggle(
+            "selected",
+            selectedSystemUpdateWarnings.within10
+        );
+
+
+    document
+        .getElementById(
+            "warning5Button"
+        )
+        .classList.toggle(
+            "selected",
+            selectedSystemUpdateWarnings.within5
+        );
+
+
+    document
+        .getElementById(
+            "warningBrownoutButton"
+        )
+        .classList.toggle(
+            "selected",
+            selectedSystemUpdateWarnings.brownoutBlackout
+        );
+
+
+    document.getElementById(
+        "warning10Button"
+    ).innerText =
+        selectedSystemUpdateWarnings.within10
+            ? "✓ Within 10e Warning"
+            : "Within 10e Warning";
+
+
+    document.getElementById(
+        "warning5Button"
+    ).innerText =
+        selectedSystemUpdateWarnings.within5
+            ? "✓ Within 5e Warning"
+            : "Within 5e Warning";
+
+
+    document.getElementById(
+        "warningBrownoutButton"
+    ).innerText =
+        selectedSystemUpdateWarnings.brownoutBlackout
+            ? "✓ Brownout / Blackout Warning"
+            : "Brownout / Blackout Warning";
+
+}
+
+
+/* ============================================================
+   RANDOM INTEGER
+   ============================================================ */
+
+function randomInteger(min,max) {
+
+    return Math.floor(
+        Math.random() *
+        (max-min+1)
+    ) + min;
+
+}
+
+
+/* ============================================================
+   BROWNOUT INPUTS
+   ============================================================ */
+
+function generateBrownoutCapacityInputs() {
+
+    const input =
+        document.getElementById(
+            "brownoutLimitInput"
+        );
+
+
+    let number =
+        parseInt(
+            input.value
+        );
+
+
+    if(isNaN(number)) {
+
+        number = 4;
+
+    }
+
+
+    number =
+        Math.max(
+            1,
+            Math.min(
+                6,
+                number
+            )
+        );
+
+
+    input.value =
+        number;
+
+
+    const container =
+        document.getElementById(
+            "brownoutCapacityInputs"
+        );
+
+
+    container.innerHTML =
+        "";
+
+
+    for(
+        let i=1;
+        i<=number;
+        i++
     ) {
 
-        state.electricityRate = 20;
+        const wrapper =
+            document.createElement(
+                "div"
+            );
 
-        state.highDemandActive = false;
+
+        wrapper.className =
+            "brownout-input";
+
+
+        wrapper.innerHTML = `
+
+            <label>
+                After Brownout ${i}
+            </label>
+
+            <input
+                type="number"
+                id="brownoutAdd${i}"
+                min="5"
+                max="15"
+                value="10">
+
+            <div style="
+                font-size:0.7rem;
+                color:var(--text-muted);
+                margin-top:4px;">
+
+                +5 to +15 electrons
+
+            </div>
+
+        `;
+
+
+        container.appendChild(
+            wrapper
+        );
+
+    }
+
+}
+
+
+generateBrownoutCapacityInputs();
+
+
+/* ============================================================
+   LOGGING
+   ============================================================ */
+
+function appendLog(msg) {
+
+    const log =
+        document.getElementById(
+            "actionHistoryLog"
+        );
+
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "log-item";
+
+
+    element.innerText =
+        `[Rd ${state.round}] ${msg}`;
+
+
+    log.insertBefore(
+        element,
+        log.firstChild
+    );
+
+}
+
+
+/* ============================================================
+   REGISTER PLAYER
+   ============================================================ */
+
+async function registerNeighbor() {
+
+    const input =
+        document.getElementById(
+            "pNameInput"
+        );
+
+
+    const name =
+        input.value.trim();
+
+
+    if(!name) {
+
+        await showMessage(
+
+            "Missing Neighbor Name",
+
+            "Please enter a name before adding a neighbor.",
+
+            "🏠"
+
+        );
+
 
         return;
 
     }
 
 
-    if(!allowHighDemandTrigger) {
+    players.push({
+
+        name,
+
+        cash:500,
+
+        goodsE:0,
+
+        solarE:0,
+
+        netE:0,
+
+        happiness:0,
+
+        accumulatedHappiness:0,
+
+        goodsCards:[],
+
+        solarPanels:[],
+
+        showDetails:false,
+
+        lastPayDay:0,
+
+        lastUtilityBill:0,
+
+        lastGridFee:0,
+
+        finishedThisRound:false,
+
+        disconnected:false,
+
+        disconnectedRound:null,
+
+        scoreFinalized:false
+
+    });
+
+
+    input.value =
+        "";
+
+
+    input.focus();
+
+
+    document.getElementById(
+        "interimList"
+    ).innerText =
+        "Registered: " +
+        players
+            .map(
+                p=>p.name
+            )
+            .join(", ");
+
+}
+
+
+/* ============================================================
+   PLAYER TURN HELPERS
+   ============================================================ */
+
+function findNextUnfinishedPlayer(
+    startIndex
+) {
+
+    if(players.length === 0) {
+
+        return -1;
+
+    }
+
+
+    for(
+        let offset=0;
+        offset<players.length;
+        offset++
+    ) {
+
+        const idx =
+            (
+                startIndex +
+                offset
+            ) %
+            players.length;
+
+
+        if(
+            !players[idx].disconnected &&
+            !players[idx].finishedThisRound
+        ) {
+
+            return idx;
+
+        }
+
+    }
+
+
+    return -1;
+
+}
+
+
+function allPlayersFinished() {
+
+    const activePlayers =
+        players.filter(
+            p=>!p.disconnected
+        );
+
+
+    if(
+        activePlayers.length === 0
+    ) {
+
+        return false;
+
+    }
+
+
+    return activePlayers.every(
+        p=>p.finishedThisRound
+    );
+
+}
+
+
+function finishPlayerRound(pIdx) {
+
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        p.disconnected ||
+        p.finishedThisRound
+    ) {
 
         return;
 
     }
 
 
-    const highDemandThreshold =
-        state.capacity - 10;
+    p.finishedThisRound =
+        true;
+
+
+    appendLog(
+        `${p.name} finished their play for Round ${state.round}.`
+    );
 
 
     if(
-        currentLoad >=
-        highDemandThreshold
+        pIdx ===
+        state.activePlayerIdx
     ) {
 
-        if(!state.highDemandActive) {
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(
+                (
+                    pIdx + 1
+                ) %
+                players.length
+            );
 
-            state.highDemandActive = true;
-
-            state.electricityRate = 30;
+    }
 
 
-            appendLog(
-                `⚠️ Flexible Billing high-demand pricing activated. ` +
-                `Neighborhood demand reached ${currentLoad}e, ` +
-                `within 10e of the ${state.capacity}e grid capacity. ` +
-                `Utility electricity rate is now $30/e.`
+    if(allPlayersFinished()) {
+
+        state.activePlayerIdx =
+            -1;
+
+
+        appendLog(
+            `All active players have finished Round ${state.round}. Pay Day is now available.`
+        );
+
+    }
+
+
+    updateUserInterface();
+
+
+    if(allPlayersFinished()) {
+
+        promptRoundSettlement();
+
+    }
+
+}
+
+
+function togglePlayerDetails(pIdx) {
+
+    if(!players[pIdx]) {
+
+        return;
+
+    }
+
+
+    players[pIdx].showDetails =
+        !players[pIdx].showDetails;
+
+
+    updateUserInterface();
+
+}
+
+
+/* ============================================================
+   GRID PARAMETERS
+   ============================================================ */
+
+function establishGridParameters() {
+
+    if(
+        setupMode ===
+        "random"
+    ) {
+
+        state.capacity =
+            randomInteger(
+                30,
+                50
+            );
+
+
+        state.brownoutLimit =
+            randomInteger(
+                1,
+                6
+            );
+
+
+        state.capacityAdditions =
+            [];
+
+
+        for(
+            let i=0;
+            i<state.brownoutLimit;
+            i++
+        ) {
+
+            state.capacityAdditions.push(
+                randomInteger(
+                    5,
+                    15
+                )
             );
 
         }
+
+
+        state.randomized =
+            true;
+
+    }
+
+    else {
+
+        const capacity =
+            parseInt(
+                document.getElementById(
+                    "initialCapacityInput"
+                ).value
+            );
+
+
+        if(
+            isNaN(capacity) ||
+            capacity < 30 ||
+            capacity > 50
+        ) {
+
+            showMessage(
+
+                "Invalid Grid Capacity",
+
+                "Initial capacity must be between <strong>30 and 50 electrons</strong>.",
+
+                "⚡"
+
+            );
+
+
+            return false;
+
+        }
+
+
+        const limit =
+            parseInt(
+                document.getElementById(
+                    "brownoutLimitInput"
+                ).value
+            );
+
+
+        if(
+            isNaN(limit) ||
+            limit < 1 ||
+            limit > 6
+        ) {
+
+            showMessage(
+
+                "Invalid Brownout Limit",
+
+                "The number of brownouts before blackout must be between <strong>1 and 6</strong>.",
+
+                "⚠️"
+
+            );
+
+
+            return false;
+
+        }
+
+
+        const additions =
+            [];
+
+
+        for(
+            let i=1;
+            i<=limit;
+            i++
+        ) {
+
+            const value =
+                parseInt(
+                    document.getElementById(
+                        `brownoutAdd${i}`
+                    ).value
+                );
+
+
+            if(
+                isNaN(value) ||
+                value < 5 ||
+                value > 15
+            ) {
+
+                showMessage(
+
+                    "Invalid Capacity Addition",
+
+                    `Capacity added after Brownout ${i} must be between <strong>5 and 15 electrons</strong>.`,
+
+                    "🔧"
+
+                );
+
+
+                return false;
+
+            }
+
+
+            additions.push(
+                value
+            );
+
+        }
+
+
+        state.capacity =
+            capacity;
+
+
+        state.brownoutLimit =
+            limit;
+
+
+        state.capacityAdditions =
+            additions;
+
+
+        state.randomized =
+            false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/* ============================================================
+   START GAME
+   ============================================================ */
+
+async function commenceGridSimulation() {
+
+    if(
+        players.length === 0
+    ) {
+
+        await showMessage(
+
+            "No Neighbors Registered",
+
+            "Please register at least one player before starting the grid manager.",
+
+            "🏠"
+
+        );
+
+
+        return;
+
+    }
+
+
+    if(
+        !establishGridParameters()
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Save all selected policies.
+     */
+
+    state.systemFinesEnabled =
+        selectedGamePolicies.systemFines;
+
+
+    state.flexibleBillingEnabled =
+        selectedGamePolicies.flexibleBilling;
+
+
+    state.systemUpdatesEnabled =
+        selectedGamePolicies.systemUpdates;
+
+
+    state.serviceDisconnectionEnabled =
+        selectedGamePolicies.serviceDisconnection;
+
+
+    /*
+     * Save all dynamic policy-design settings.
+     */
+
+    state.systemFineRate =
+        parseInt(
+            document.getElementById(
+                "systemFineRateInput"
+            ).value
+        ) || 50;
+
+
+    state.highDemandRate =
+        parseInt(
+            document.getElementById(
+                "highDemandRateInput"
+            ).value
+        ) || 30;
+
+
+    state.normalElectricityRate =
+        20;
+
+
+    state.electricityRate =
+        state.normalElectricityRate;
+
+
+    state.highDemandActive =
+        false;
+
+
+    state.systemUpdateWarnings = {
+
+        within10:
+            selectedSystemUpdateWarnings.within10,
+
+        within5:
+            selectedSystemUpdateWarnings.within5,
+
+        brownoutBlackout:
+            selectedSystemUpdateWarnings.brownoutBlackout
+
+    };
+
+
+    players.forEach(
+        p=>{
+            p.finishedThisRound =
+                false;
+        }
+    );
+
+
+    document.getElementById(
+        "setupView"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "managerView"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "gridDashboard"
+    ).style.display =
+        "grid";
+
+
+    state.activePlayerIdx =
+        state.startingPlayerIdx;
+
+
+    if(state.randomized) {
+
+        document.getElementById(
+            "demandDashboardCard"
+        ).style.display =
+            "none";
+
+
+        document.getElementById(
+            "brownoutDashboardCard"
+        ).style.display =
+            "none";
+
+    }
+
+    else {
+
+        document.getElementById(
+            "demandDashboardCard"
+        ).style.display =
+            "block";
+
+
+        document.getElementById(
+            "brownoutDashboardCard"
+        ).style.display =
+            "block";
+
+    }
+
+
+    evaluateSystemDemand();
+
+    updateBrownoutBoxes();
+
+    updateUserInterface();
+
+
+    appendLog(
+        `Grid initialized with ${state.capacity}e capacity.`
+    );
+
+
+    const activePolicies =
+        [];
+
+
+    if(
+        state.systemFinesEnabled
+    ) {
+
+        activePolicies.push(
+            "System Fines for Exceeding Capacity"
+        );
+
+
+        appendLog(
+            `System Fine rate: $${state.systemFineRate} per excess electron.`
+        );
+
+    }
+
+
+    if(
+        state.flexibleBillingEnabled
+    ) {
+
+        activePolicies.push(
+            "Flexible Billing Rates"
+        );
+
+
+        appendLog(
+            `Flexible Billing: normal rate $${state.normalElectricityRate}/e; high-demand rate $${state.highDemandRate}/e.`
+        );
+
+    }
+
+
+    if(
+        state.systemUpdatesEnabled
+    ) {
+
+        activePolicies.push(
+            "System Updates for Customers"
+        );
+
+
+        const enabledWarnings =
+            [];
+
+
+        if(
+            state.systemUpdateWarnings.within10
+        ) {
+
+            enabledWarnings.push(
+                "within 10e"
+            );
+
+        }
+
+
+        if(
+            state.systemUpdateWarnings.within5
+        ) {
+
+            enabledWarnings.push(
+                "within 5e"
+            );
+
+        }
+
+
+        if(
+            state.systemUpdateWarnings.brownoutBlackout
+        ) {
+
+            enabledWarnings.push(
+                "brownout/blackout"
+            );
+
+        }
+
+
+        appendLog(
+            `System Updates enabled for: ${
+                enabledWarnings.length
+                    ? enabledWarnings.join(", ")
+                    : "no warning levels"
+            }.`
+        );
+
+    }
+
+
+    if(
+        state.serviceDisconnectionEnabled
+    ) {
+
+        activePolicies.push(
+            "Service Disconnection"
+        );
+
+    }
+
+
+    if(
+        activePolicies.length === 0
+    ) {
+
+        appendLog(
+            "Game Policies: No Policies."
+        );
+
+    }
+
+    else {
+
+        appendLog(
+            `Game Policies Active: ${activePolicies.join(" + ")}.`
+        );
+
+    }
+
+
+    if(
+        !state.randomized
+    ) {
+
+        appendLog(
+            `Blackout threshold: ${state.brownoutLimit} brownout(s).`
+        );
+
+
+        appendLog(
+            `Capacity additions after brownouts: ${state.capacityAdditions.join(", ")}e.`
+        );
 
     }
 
@@ -2546,26 +4027,32 @@ function evaluateFlexibleBilling(
 
 
 /* ============================================================
-   SYSTEM LOAD HELPERS
+   SYSTEM LOAD
    ============================================================ */
 
 function getCurrentSystemLoad() {
 
-    let currentLoad = 0;
+    let currentLoad =
+        0;
 
 
     players.forEach(p=>{
 
-        if(p.disconnected) {
+        if(
+            p.disconnected
+        ) {
 
             return;
 
         }
 
 
-        currentLoad += p.goodsE;
+        currentLoad +=
+            p.goodsE;
 
-        currentLoad -= p.solarE;
+
+        currentLoad -=
+            p.solarE;
 
     });
 
@@ -2586,7 +4073,10 @@ function getProjectedSystemLoad(
         getCurrentSystemLoad();
 
 
-    if(cardType === "yellow") {
+    if(
+        cardType ===
+        "yellow"
+    ) {
 
         if(
             selectedDiscardIndex >= 0 &&
@@ -2606,7 +4096,9 @@ function getProjectedSystemLoad(
 
 
         projectedLoad +=
-            Math.abs(card.electrons);
+            Math.abs(
+                card.electrons
+            );
 
     }
 
@@ -2634,6 +4126,140 @@ function getProjectedSystemLoad(
 
 
     return projectedLoad;
+
+}
+
+
+/* ============================================================
+   FLEXIBLE BILLING
+   ============================================================ */
+
+function resetFlexibleBillingRate(
+    reason = ""
+) {
+
+    if(
+        !state.flexibleBillingEnabled
+    ) {
+
+        return;
+
+    }
+
+
+    const wasHighDemand =
+        state.highDemandActive;
+
+
+    state.electricityRate =
+        state.normalElectricityRate;
+
+
+    state.highDemandActive =
+        false;
+
+
+    if(wasHighDemand) {
+
+        appendLog(
+            `💡 Flexible Billing rate reset to $${state.normalElectricityRate}/e${reason ? ` ${reason}` : ""}.`
+        );
+
+    }
+
+}
+
+
+function evaluateFlexibleBilling(
+    currentLoad,
+    allowHighDemandTrigger = true
+) {
+
+    if(
+        !state.flexibleBillingEnabled
+    ) {
+
+        state.electricityRate =
+            state.normalElectricityRate;
+
+
+        state.highDemandActive =
+            false;
+
+
+        return;
+
+    }
+
+
+    if(
+        !allowHighDemandTrigger
+    ) {
+
+        return;
+
+    }
+
+
+    const threshold =
+        state.capacity - 10;
+
+
+    if(
+        currentLoad >= threshold &&
+        !state.highDemandActive
+    ) {
+
+        state.highDemandActive =
+            true;
+
+
+        state.electricityRate =
+            state.highDemandRate;
+
+
+        appendLog(
+            `⚠️ Flexible Billing high-demand pricing activated at $${state.highDemandRate}/e. Neighborhood demand reached ${currentLoad}e.`
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   DEMAND
+   ============================================================ */
+
+function evaluateSystemDemand(
+    allowHighDemandTrigger = true
+) {
+
+    const currentLoad =
+        getCurrentSystemLoad();
+
+
+    document.getElementById(
+        "dispDemand"
+    ).innerText =
+        `${currentLoad} / ${state.capacity} e`;
+
+
+    document.getElementById(
+        "dispDemand"
+    ).style.color =
+        currentLoad > state.capacity
+            ? "var(--danger)"
+            : "var(--text-main)";
+
+
+    evaluateFlexibleBilling(
+        currentLoad,
+        allowHighDemandTrigger
+    );
+
+
+    return currentLoad;
 
 }
 
@@ -2671,39 +4297,78 @@ async function promptSystemUpdateForPurchase(
         );
 
 
-    if(projectedLoad <= currentLoad) {
+    /*
+     * Purchases that do not increase demand
+     * receive no warning.
+     */
+
+    if(
+        projectedLoad <=
+        currentLoad
+    ) {
 
         return true;
 
     }
 
 
-    let title = "";
+    let title =
+        "";
 
-    let icon = "📢";
+    let icon =
+        "📢";
 
-    let message = "";
+    let message =
+        "";
 
-    let confirmClass = "warning";
+    let confirmClass =
+        "warning";
 
 
-    if(projectedLoad > state.capacity) {
+    /*
+     * MOST SEVERE APPLICABLE ENABLED WARNING:
+     *
+     * 1. Brownout / Blackout
+     * 2. Within 5e
+     * 3. Within 10e
+     */
 
-        const projectedBrownoutNumber =
+
+    if(
+        projectedLoad >
+        state.capacity
+    ) {
+
+        if(
+            !state.systemUpdateWarnings.brownoutBlackout
+        ) {
+
+            return true;
+
+        }
+
+
+        const projectedBrownout =
             state.brownouts + 1;
 
 
-        if(
-            projectedBrownoutNumber >=
-            state.brownoutLimit
-        ) {
+        const causesBlackout =
+            projectedBrownout >=
+            state.brownoutLimit;
+
+
+        if(causesBlackout) {
 
             title =
                 "🚨 System Update: Blackout Warning";
 
-            icon = "🚨";
 
-            confirmClass = "danger";
+            icon =
+                "🚨";
+
+
+            confirmClass =
+                "danger";
 
 
             message = `
@@ -2716,17 +4381,17 @@ async function promptSystemUpdateForPurchase(
 
                     <br><br>
 
-                    Current neighborhood demand:
+                    Current Demand:
                     <strong>${currentLoad}e</strong>
 
                     <br>
 
-                    Projected demand after purchase:
+                    Projected Demand:
                     <strong>${projectedLoad}e</strong>
 
                     <br>
 
-                    Grid capacity:
+                    Grid Capacity:
                     <strong>${state.capacity}e</strong>
 
                 </div>
@@ -2736,22 +4401,37 @@ async function promptSystemUpdateForPurchase(
                     margin-top:15px;
                     color:var(--text-muted);">
 
-                    This purchase would exceed grid capacity
-                    by
-
+                    This purchase would exceed capacity by
                     <strong>
                         ${projectedLoad - state.capacity}e
-                    </strong>
-
-                    and trigger
-                    <strong>
-                        Brownout ${projectedBrownoutNumber}
                     </strong>.
 
                     <br><br>
 
-                    Completing this purchase will cause a
-                    <strong>system blackout and end the game</strong>.
+                    It would trigger Brownout
+                    <strong>${projectedBrownout}</strong>,
+                    reaching the blackout threshold.
+
+                    ${
+                        state.systemFinesEnabled
+                            ? `
+
+                            <br><br>
+
+                            The applicable System Fine would be
+                            <strong>
+                                $${(
+                                    (
+                                        projectedLoad -
+                                        state.capacity
+                                    ) *
+                                    state.systemFineRate
+                                ).toLocaleString()}
+                            </strong>.
+
+                            `
+                            : ""
+                    }
 
                     ${
                         state.serviceDisconnectionEnabled
@@ -2761,8 +4441,8 @@ async function promptSystemUpdateForPurchase(
 
                             <strong style="color:var(--danger);">
                                 Service Disconnection is active.
-                                Your electrical service will also
-                                be disconnected and your score finalized.
+                                Your service will be disconnected
+                                and your score finalized.
                             </strong>
 
                             `
@@ -2784,9 +4464,13 @@ async function promptSystemUpdateForPurchase(
             title =
                 "⚠️ System Update: Brownout Warning";
 
-            icon = "⚠️";
 
-            confirmClass = "warning";
+            icon =
+                "⚠️";
+
+
+            confirmClass =
+                "warning";
 
 
             message = `
@@ -2799,17 +4483,17 @@ async function promptSystemUpdateForPurchase(
 
                     <br><br>
 
-                    Current neighborhood demand:
+                    Current Demand:
                     <strong>${currentLoad}e</strong>
 
                     <br>
 
-                    Projected demand after purchase:
+                    Projected Demand:
                     <strong>${projectedLoad}e</strong>
 
                     <br>
 
-                    Grid capacity:
+                    Grid Capacity:
                     <strong>${state.capacity}e</strong>
 
                 </div>
@@ -2819,19 +4503,31 @@ async function promptSystemUpdateForPurchase(
                     margin-top:15px;
                     color:var(--text-muted);">
 
-                    This purchase would exceed grid capacity
-                    by
-
+                    This purchase would exceed capacity by
                     <strong>
                         ${projectedLoad - state.capacity}e
                     </strong>.
 
-                    <br><br>
+                    ${
+                        state.systemFinesEnabled
+                            ? `
 
-                    Completing the purchase will trigger
-                    <strong>
-                        Brownout ${projectedBrownoutNumber}
-                    </strong>.
+                            <br><br>
+
+                            The applicable System Fine would be
+                            <strong>
+                                $${(
+                                    (
+                                        projectedLoad -
+                                        state.capacity
+                                    ) *
+                                    state.systemFineRate
+                                ).toLocaleString()}
+                            </strong>.
+
+                            `
+                            : ""
+                    }
 
                     ${
                         state.serviceDisconnectionEnabled
@@ -2841,8 +4537,8 @@ async function promptSystemUpdateForPurchase(
 
                             <strong style="color:var(--danger);">
                                 Service Disconnection is active.
-                                Your electrical service will be
-                                disconnected and your score finalized.
+                                Your service will be disconnected
+                                and your score finalized.
                             </strong>
 
                             `
@@ -2863,15 +4559,12 @@ async function promptSystemUpdateForPurchase(
 
     else if(
         projectedLoad >=
-        state.capacity - 5
+        state.capacity - 5 &&
+        state.systemUpdateWarnings.within5
     ) {
 
         title =
             "⚠️ System Update: High Grid Demand";
-
-        icon = "⚠️";
-
-        confirmClass = "warning";
 
 
         message = `
@@ -2885,18 +4578,20 @@ async function promptSystemUpdateForPurchase(
 
                 <br><br>
 
-                Current neighborhood demand:
-                <strong>${currentLoad}e</strong>
-
-                <br>
-
-                Projected demand after purchase:
+                Projected Demand:
                 <strong>${projectedLoad}e</strong>
 
                 <br>
 
-                Grid capacity:
+                Grid Capacity:
                 <strong>${state.capacity}e</strong>
+
+                <br>
+
+                Remaining Capacity:
+                <strong>
+                    ${state.capacity - projectedLoad}e
+                </strong>
 
             </div>
 
@@ -2904,16 +4599,6 @@ async function promptSystemUpdateForPurchase(
             <div style="
                 margin-top:15px;
                 color:var(--text-muted);">
-
-                Only
-
-                <strong>
-                    ${state.capacity - projectedLoad}e
-                </strong>
-
-                of unused grid capacity will remain.
-
-                <br><br>
 
                 Would you like to complete the purchase?
 
@@ -2925,15 +4610,20 @@ async function promptSystemUpdateForPurchase(
 
     else if(
         projectedLoad >=
-        state.capacity - 10
+        state.capacity - 10 &&
+        state.systemUpdateWarnings.within10
     ) {
 
         title =
             "📢 System Update: Grid Capacity Notice";
 
-        icon = "📢";
 
-        confirmClass = "primary";
+        icon =
+            "📢";
+
+
+        confirmClass =
+            "primary";
 
 
         message = `
@@ -2947,18 +4637,20 @@ async function promptSystemUpdateForPurchase(
 
                 <br><br>
 
-                Current neighborhood demand:
-                <strong>${currentLoad}e</strong>
-
-                <br>
-
-                Projected demand after purchase:
+                Projected Demand:
                 <strong>${projectedLoad}e</strong>
 
                 <br>
 
-                Grid capacity:
+                Grid Capacity:
                 <strong>${state.capacity}e</strong>
+
+                <br>
+
+                Remaining Capacity:
+                <strong>
+                    ${state.capacity - projectedLoad}e
+                </strong>
 
             </div>
 
@@ -2966,16 +4658,6 @@ async function promptSystemUpdateForPurchase(
             <div style="
                 margin-top:15px;
                 color:var(--text-muted);">
-
-                After the purchase,
-
-                <strong>
-                    ${state.capacity - projectedLoad}e
-                </strong>
-
-                of unused grid capacity will remain.
-
-                <br><br>
 
                 Would you like to complete the purchase?
 
@@ -3024,19 +4706,13 @@ async function promptSystemUpdateForPurchase(
     if(!proceed) {
 
         appendLog(
-            `📢 ${p.name} cancelled the purchase of ${card.id} ` +
-            `after receiving a System Update warning.`
+            `📢 ${p.name} cancelled the purchase of ${card.id} after receiving a System Update.`
         );
+
 
         return false;
 
     }
-
-
-    appendLog(
-        `📢 ${p.name} acknowledged the System Update warning ` +
-        `and chose to complete the purchase of ${card.id}.`
-    );
 
 
     return true;
@@ -3045,315 +4721,24 @@ async function promptSystemUpdateForPurchase(
 
 
 /* ============================================================
-   SERVICE DISCONNECTION
+   CARD / HOUSE HELPERS
    ============================================================ */
 
-async function disconnectPlayerService(
-    pIdx,
-    eventType
+function getPlayerHouseCardCount(
+    player
 ) {
 
-    const p =
-        players[pIdx];
-
-
-    if(
-        !p ||
-        p.disconnected
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Finalize this player's score immediately.
-     * The player will be excluded from future round-end
-     * Happiness accumulation.
-     */
-
-    p.accumulatedHappiness +=
-        p.happiness;
-
-
-    p.scoreFinalized = true;
-
-    p.disconnectedRound =
-        state.round;
-
-
-    appendLog(
-        `🔌 ${p.name}'s service was disconnected after causing a ${eventType}.`
-    );
-
-
-    appendLog(
-        `🏁 ${p.name}'s score was finalized at ` +
-        `${p.accumulatedHappiness} Accumulated Happiness Point(s).`
-    );
-
-
-    /*
-     * Permanently remove all cards from play.
-     * Quantities are NOT restored to the neighborhood decks.
-     */
-
-    p.goodsCards.forEach(card=>{
-
-        state.removedFromPlay.push({
-
-            ...card,
-
-            originalOwner:p.name,
-
-            removedRound:state.round,
-
-            removedType:"goods",
-
-            reason:"Service Disconnection"
-
-        });
-
-    });
-
-
-    p.solarPanels.forEach(card=>{
-
-        state.removedFromPlay.push({
-
-            ...card,
-
-            originalOwner:p.name,
-
-            removedRound:state.round,
-
-            removedType:"solar",
-
-            reason:"Service Disconnection"
-
-        });
-
-    });
-
-
-    const removedGoodsCount =
-        p.goodsCards.length;
-
-
-    const removedSolarCount =
-        p.solarPanels.length;
-
-
-    p.goodsCards = [];
-
-    p.solarPanels = [];
-
-
-    /*
-     * Immediately remove all demand and generation
-     * associated with the disconnected customer.
-     */
-
-    p.goodsE = 0;
-
-    p.solarE = 0;
-
-    p.netE = 0;
-
-
-    p.disconnected = true;
-
-    p.finishedThisRound = true;
-
-
-    appendLog(
-        `🔌 ${p.name}'s ${removedGoodsCount} Goods card(s) and ` +
-        `${removedSolarCount} Solar Panel card(s) were permanently removed from play.`
-    );
-
-
-    appendLog(
-        `⚡ ${p.name}'s electricity demand and Solar generation were removed from the grid.`
-    );
-
-
-    /*
-     * Remove this player from any Solar Panel special-turn
-     * collections.
-     */
-
-    state.solarPanelEligiblePlayers =
-        state.solarPanelEligiblePlayers.filter(
-            idx=>idx !== pIdx
-        );
-
-
-    state.solarPanelCompletedPlayers =
-        state.solarPanelCompletedPlayers.filter(
-            idx=>idx !== pIdx
-        );
-
-
-    /*
-     * Move turn control to the next active customer.
-     */
-
-    if(state.activePlayerIdx === pIdx) {
-
-        state.activePlayerIdx =
-            findNextUnfinishedPlayer(
-                (
-                    pIdx + 1
-                ) %
-                players.length
-            );
-
-    }
-
-
-    evaluateSystemDemand(false);
-
-    updateUserInterface();
-
-
-    await showMessage(
-
-        "🔌 Service Disconnected",
-
-        `
-
-        <div class="modal-event danger">
-
-            <strong>
-                ${p.name}'s electrical service has been disconnected.
-            </strong>
-
-            <br><br>
-
-            The customer caused a
-            <strong>${eventType}</strong>.
-
-        </div>
-
-
-        <div class="modal-financial-grid">
-
-            <div class="modal-financial-item">
-
-                <div class="modal-financial-label">
-                    Finalized Score
-                </div>
-
-                <div class="modal-financial-value"
-                     style="color:#a855f7;">
-
-                    ${p.accumulatedHappiness} pts
-
-                </div>
-
-            </div>
-
-
-            <div class="modal-financial-item">
-
-                <div class="modal-financial-label">
-                    Service Status
-                </div>
-
-                <div class="modal-financial-value"
-                     style="color:var(--danger);">
-
-                    Disconnected
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div style="
-            margin-top:15px;
-            color:var(--text-muted);
-            font-size:0.85rem;">
-
-            This customer has been removed from future gameplay.
-
-            <br><br>
-
-            Their Goods cards and Solar Panels have been
-            permanently removed from play and cannot be purchased
-            by another player.
-
-            <br><br>
-
-            Their electricity demand and Solar generation have
-            also been removed from the neighborhood grid.
-
-            <br><br>
-
-            They will receive no further turns, Pay Days,
-            utility bills, grid fees, Solar Panel opportunities,
-            or Happiness accumulation.
-
-        </div>
-
-        `,
-
-        "🔌",
-
-        "Continue"
-
-    );
-
-
-    const activePlayers =
-        players.filter(
-            player=>!player.disconnected
-        );
-
-
-    if(activePlayers.length === 0) {
-
-        forceEndGame(
-            "allDisconnected"
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   HOUSE / CARD HELPERS
-   ============================================================ */
-
-function getPlayerGoodsCount(player) {
-
-    return player.goodsCards.length;
-
-}
-
-
-function getPlayerSolarCount(player) {
-
-    return player.solarPanels.length;
-
-}
-
-
-function getPlayerHouseCardCount(player) {
-
     return (
-        getPlayerGoodsCount(player) +
-        getPlayerSolarCount(player)
+        player.goodsCards.length +
+        player.solarPanels.length
     );
 
 }
 
 
-function createHouseCard(card) {
+function createHouseCard(
+    card
+) {
 
     return {
 
@@ -3375,13 +4760,6 @@ function returnCardToBoard(
     cardType
 ) {
 
-    if(!discarded) {
-
-        return;
-
-    }
-
-
     const deck =
         cardType === "goods"
             ? goodsCards
@@ -3391,13 +4769,15 @@ function returnCardToBoard(
     const boardCard =
         deck.find(
             card =>
-                card.id === discarded.id
+                card.id ===
+                discarded.id
         );
 
 
     if(boardCard) {
 
-        boardCard.quantity += 1;
+        boardCard.quantity +=
+            1;
 
     }
 
@@ -3410,27 +4790,10 @@ function discardHouseCard(
     cardIndex
 ) {
 
-    if(!p) {
-
-        return null;
-
-    }
-
-
     const collection =
         cardType === "goods"
             ? p.goodsCards
             : p.solarPanels;
-
-
-    if(
-        cardIndex < 0 ||
-        cardIndex >= collection.length
-    ) {
-
-        return null;
-
-    }
 
 
     const discarded =
@@ -3453,9 +4816,6 @@ function discardHouseCard(
 
         originalOwner:p.name,
 
-        originalOwnerIndex:
-            players.indexOf(p),
-
         discardedRound:
             state.round,
 
@@ -3471,10 +4831,15 @@ function discardHouseCard(
     );
 
 
-    if(cardType === "goods") {
+    if(
+        cardType ===
+        "goods"
+    ) {
 
         p.goodsE -=
-            Math.abs(discarded.electrons);
+            Math.abs(
+                discarded.electrons
+            );
 
     }
 
@@ -3489,15 +4854,6 @@ function discardHouseCard(
     p.netE =
         p.solarE -
         p.goodsE;
-
-
-    appendLog(
-
-        `🗑️ ${p.name} sent ${cardType === "goods" ? "Goods" : "Solar Panel"} Card ${discarded.id} to the landfill. ` +
-
-        `The card has been returned to the neighborhood board and is available for purchase again.`
-
-    );
 
 
     return discarded;
@@ -3517,37 +4873,25 @@ async function chooseHouseCardToDiscard(
             : p.solarPanels;
 
 
-    if(collection.length === 0) {
+    const buttons =
+        collection.map(
+            (
+                heldCard,
+                index
+            )=>({
 
-        return -1;
+                text:
+                    `Discard ${heldCard.id}`,
 
-    }
+                className:
+                    cardType === "goods"
+                        ? "goods"
+                        : "solar",
 
+                value:index
 
-    const buttons = [];
-
-
-    collection.forEach((heldCard,index)=>{
-
-        buttons.push({
-
-            text:
-                `Discard ${heldCard.id} — ` +
-                `${cardType === "goods"
-                    ? Math.abs(heldCard.electrons)
-                    : heldCard.electrons
-                }e`,
-
-            className:
-                cardType === "goods"
-                    ? "goods"
-                    : "solar",
-
-            value:index
-
-        });
-
-    });
+            })
+        );
 
 
     buttons.push({
@@ -3581,31 +4925,10 @@ async function chooseHouseCardToDiscard(
 
                 <br><br>
 
-                You already have
-                <strong>
-                    ${collection.length}
-                    ${cardType === "goods"
-                        ? "Goods cards"
-                        : "Solar Panel cards"
-                    }
-                </strong>
-                in your house.
-
-            </div>
-
-
-            <div style="
-                margin-top:15px;
-                color:var(--text-muted);">
-
                 To purchase
                 <strong>${newCard.id}</strong>,
-                you must select one of your current
-                ${cardType === "goods"
-                    ? "Goods cards"
-                    : "Solar Panels"
-                }
-                to send to the landfill.
+                select one current card to send
+                to the landfill.
 
             </div>
 
@@ -3619,10 +4942,13 @@ async function chooseHouseCardToDiscard(
 
 
 /* ============================================================
-   FINISH ROUND POP-UP
+   SERVICE DISCONNECTION
    ============================================================ */
 
-async function promptFinishRound(pIdx) {
+async function disconnectPlayerService(
+    pIdx,
+    eventType
+) {
 
     const p =
         players[pIdx];
@@ -3630,7 +4956,6 @@ async function promptFinishRound(pIdx) {
 
     if(
         !p ||
-        p.finishedThisRound ||
         p.disconnected
     ) {
 
@@ -3639,645 +4964,233 @@ async function promptFinishRound(pIdx) {
     }
 
 
-    const finishChoice =
-        await openGameModal({
+    /*
+     * Finalize accumulated happiness at end of turn.
+     */
 
-            title:
-                `${p.name}: Finish for This Round?`,
-
-            icon:"🏁",
-
-            body:`
-
-                <div class="modal-event success">
-
-                    <strong>
-                        Purchase complete.
-                    </strong>
-
-                    <br><br>
-
-                    Would you like to finish your play
-                    for <strong>Round ${state.round}</strong>?
-
-                </div>
+    p.accumulatedHappiness +=
+        p.happiness;
 
 
-                <div style="
-                    margin-top:15px;
-                    color:var(--text-muted);
-                    font-size:0.85rem;">
+    p.scoreFinalized =
+        true;
 
-                    If you finish, you will no longer be
-                    able to make purchases during this round.
 
-                    You may also continue the round and
-                    leave your turn unfinished.
+    p.disconnectedRound =
+        state.round;
 
-                </div>
 
-            `,
+    /*
+     * Permanently remove every owned card.
+     * Quantities are NOT restored.
+     */
 
-            buttons:[
+    p.goodsCards.forEach(card=>{
 
-                {
-                    text:"Continue Round",
-                    className:"secondary",
-                    value:false
-                },
+        state.removedFromPlay.push({
 
-                {
-                    text:"Finish for This Round",
-                    className:"success",
-                    value:true
-                }
+            ...card,
 
-            ]
+            originalOwner:p.name,
+
+            removedRound:
+                state.round,
+
+            removedType:
+                "goods",
+
+            reason:
+                "Service Disconnection"
 
         });
-
-
-    if(finishChoice) {
-
-        finishPlayerRound(pIdx);
-
-    }
-
-}
-
-
-/* ============================================================
-   ROUND SETTLEMENT POP-UP
-   ============================================================ */
-
-async function promptRoundSettlement() {
-
-    if(
-        !allPlayersFinished() ||
-        state.upgradeRequired
-    ) {
-
-        return;
-
-    }
-
-
-    const rateNotice =
-        state.flexibleBillingEnabled
-            ? `
-
-                <li>
-                    Apply the current electricity billing rate
-                    of <strong>$${state.electricityRate}/electron</strong>
-                    to utility bills.
-                </li>
-
-              `
-            : "";
-
-
-    const settlementChoice =
-        await openGameModal({
-
-            title:
-                "Process Pay Day & Utility Bills",
-
-            icon:"💰",
-
-            body:`
-
-                <div class="modal-event success">
-
-                    <strong>
-                        🏁 All active players have finished Round ${state.round}.
-                    </strong>
-
-                    <br><br>
-
-                    The neighborhood is ready to process
-                    Pay Day and Utility Bills.
-
-                </div>
-
-
-                <div style="
-                    margin-top:15px;
-                    color:var(--text-muted);
-                    font-size:0.85rem;">
-
-                    Processing the round will:
-
-                    <ul style="
-                        margin-top:8px;
-                        padding-left:20px;">
-
-                        <li>
-                            Record each active player's current Happiness Index
-                            toward their Accumulated Happiness.
-                        </li>
-
-                        <li>
-                            Distribute Pay Day.
-                        </li>
-
-                        <li>
-                            Process utility bills.
-                        </li>
-
-                        ${rateNotice}
-
-                        <li>
-                            Process surplus electricity income.
-                        </li>
-
-                        <li>
-                            Collect neighborhood grid fees.
-                        </li>
-
-                    </ul>
-
-                    Disconnected customers are excluded
-                    from all future financial settlements.
-
-                </div>
-
-            `,
-
-            buttons:[
-
-                {
-                    text:"Process Pay Day & Utility Bills",
-                    className:"success",
-                    value:true
-                }
-
-            ]
-
-        });
-
-
-    if(settlementChoice) {
-
-        await executeRoundEndPayments();
-
-    }
-
-}
-
-
-/* ============================================================
-   SETUP MODE
-   ============================================================ */
-
-let setupMode = "manual";
-
-
-function setSetupMode(mode) {
-
-    setupMode = mode;
-
-    const manual =
-        document.getElementById("manualSetup");
-
-    const random =
-        document.getElementById("randomSetup");
-
-    const manualButton =
-        document.getElementById("manualModeButton");
-
-    const randomButton =
-        document.getElementById("randomModeButton");
-
-
-    if(mode === "manual") {
-
-        manual.style.display = "block";
-
-        random.style.display = "none";
-
-        manualButton.classList.add("selected");
-
-        randomButton.classList.remove("selected");
-
-    }
-
-    else {
-
-        manual.style.display = "none";
-
-        random.style.display = "block";
-
-        manualButton.classList.remove("selected");
-
-        randomButton.classList.add("selected");
-
-    }
-
-}
-
-
-/* ============================================================
-   GAME POLICY SELECTION
-   ============================================================ */
-
-let selectedGamePolicies = {
-
-    systemFines:false,
-
-    flexibleBilling:false,
-
-    systemUpdates:false,
-
-    serviceDisconnection:false
-
-};
-
-
-function updateGamePolicyButtons() {
-
-    const noPoliciesButton =
-        document.getElementById(
-            "noPoliciesButton"
-        );
-
-    const systemFinesButton =
-        document.getElementById(
-            "systemFinesPolicyButton"
-        );
-
-    const flexibleBillingButton =
-        document.getElementById(
-            "flexibleBillingPolicyButton"
-        );
-
-    const systemUpdatesButton =
-        document.getElementById(
-            "systemUpdatesPolicyButton"
-        );
-
-    const serviceDisconnectionButton =
-        document.getElementById(
-            "serviceDisconnectionPolicyButton"
-        );
-
-
-    const noPoliciesActive =
-        !selectedGamePolicies.systemFines &&
-        !selectedGamePolicies.flexibleBilling &&
-        !selectedGamePolicies.systemUpdates &&
-        !selectedGamePolicies.serviceDisconnection;
-
-
-    noPoliciesButton.classList.toggle(
-        "selected",
-        noPoliciesActive
-    );
-
-
-    systemFinesButton.classList.toggle(
-        "selected",
-        selectedGamePolicies.systemFines
-    );
-
-
-    flexibleBillingButton.classList.toggle(
-        "selected",
-        selectedGamePolicies.flexibleBilling
-    );
-
-
-    systemUpdatesButton.classList.toggle(
-        "selected",
-        selectedGamePolicies.systemUpdates
-    );
-
-
-    serviceDisconnectionButton.classList.toggle(
-        "selected",
-        selectedGamePolicies.serviceDisconnection
-    );
-
-}
-
-
-function setNoPolicies() {
-
-    selectedGamePolicies.systemFines =
-        false;
-
-    selectedGamePolicies.flexibleBilling =
-        false;
-
-    selectedGamePolicies.systemUpdates =
-        false;
-
-    selectedGamePolicies.serviceDisconnection =
-        false;
-
-
-    updateGamePolicyButtons();
-
-}
-
-
-function toggleGamePolicy(policy) {
-
-    if(policy === "systemFines") {
-
-        selectedGamePolicies.systemFines =
-            !selectedGamePolicies.systemFines;
-
-    }
-
-    else if(policy === "flexibleBilling") {
-
-        selectedGamePolicies.flexibleBilling =
-            !selectedGamePolicies.flexibleBilling;
-
-    }
-
-    else if(policy === "systemUpdates") {
-
-        selectedGamePolicies.systemUpdates =
-            !selectedGamePolicies.systemUpdates;
-
-    }
-
-    else if(policy === "serviceDisconnection") {
-
-        selectedGamePolicies.serviceDisconnection =
-            !selectedGamePolicies.serviceDisconnection;
-
-    }
-
-
-    updateGamePolicyButtons();
-
-}
-
-
-/* ============================================================
-   RANDOM INTEGER
-   ============================================================ */
-
-function randomInteger(min,max) {
-
-    return Math.floor(
-        Math.random() *
-        (max-min+1)
-    ) + min;
-
-}
-
-
-/* ============================================================
-   BROWNOUT INPUTS
-   ============================================================ */
-
-function generateBrownoutCapacityInputs() {
-
-    const input =
-        document.getElementById(
-            "brownoutLimitInput"
-        );
-
-    let number =
-        parseInt(input.value);
-
-
-    if(isNaN(number)) {
-
-        number = 4;
-
-    }
-
-
-    number =
-        Math.max(
-            1,
-            Math.min(6,number)
-        );
-
-
-    input.value = number;
-
-
-    const container =
-        document.getElementById(
-            "brownoutCapacityInputs"
-        );
-
-
-    container.innerHTML = "";
-
-
-    for(let i=1;i<=number;i++) {
-
-        const wrapper =
-            document.createElement("div");
-
-        wrapper.className =
-            "brownout-input";
-
-
-        wrapper.innerHTML = `
-
-            <label>
-                After Brownout ${i}
-            </label>
-
-            <input
-                type="number"
-                id="brownoutAdd${i}"
-                min="5"
-                max="15"
-                value="10">
-
-            <div style="
-                font-size:0.7rem;
-                color:var(--text-muted);
-                margin-top:4px;">
-
-                +5 to +15 electrons
-
-            </div>
-
-        `;
-
-
-        container.appendChild(wrapper);
-
-    }
-
-}
-
-
-generateBrownoutCapacityInputs();
-
-
-/* ============================================================
-   LOGGING
-   ============================================================ */
-
-function appendLog(msg) {
-
-    const log =
-        document.getElementById(
-            "actionHistoryLog"
-        );
-
-
-    const element =
-        document.createElement("div");
-
-
-    element.className =
-        "log-item";
-
-
-    element.innerText =
-        `[Rd ${state.round}] ${msg}`;
-
-
-    log.insertBefore(
-        element,
-        log.firstChild
-    );
-
-}
-
-
-/* ============================================================
-   REGISTER PLAYER
-   ============================================================ */
-
-async function registerNeighbor() {
-
-    const input =
-        document.getElementById(
-            "pNameInput"
-        );
-
-
-    const name =
-        input.value.trim();
-
-
-    if(!name) {
-
-        await showMessage(
-            "Missing Neighbor Name",
-            "Please enter a name before adding a neighbor.",
-            "🏠"
-        );
-
-        return;
-
-    }
-
-
-    players.push({
-
-        name,
-
-        cash:500,
-
-        goodsE:0,
-
-        solarE:0,
-
-        netE:0,
-
-        happiness:0,
-
-        accumulatedHappiness:0,
-
-        goodsCards:[],
-
-        solarPanels:[],
-
-        showDetails:false,
-
-        lastPayDay:0,
-
-        lastUtilityBill:0,
-
-        lastGridFee:0,
-
-        finishedThisRound:false,
-
-        disconnected:false,
-
-        disconnectedRound:null,
-
-        scoreFinalized:false
 
     });
 
 
-    input.value = "";
+    p.solarPanels.forEach(card=>{
 
-    input.focus();
+        state.removedFromPlay.push({
 
+            ...card,
 
-    document.getElementById(
-        "interimList"
-    ).innerText =
-        "Registered: " +
-        players.map(p=>p.name).join(", ");
+            originalOwner:p.name,
 
-}
+            removedRound:
+                state.round,
 
+            removedType:
+                "solar",
 
-/* ============================================================
-   FIND NEXT UNFINISHED PLAYER
-   ============================================================ */
+            reason:
+                "Service Disconnection"
 
-function findNextUnfinishedPlayer(startIndex) {
+        });
 
-    if(players.length === 0) {
-
-        return -1;
-
-    }
+    });
 
 
-    for(
-        let offset=0;
-        offset<players.length;
-        offset++
-    ) {
+    const removedGoods =
+        p.goodsCards.length;
 
-        const idx =
+
+    const removedSolar =
+        p.solarPanels.length;
+
+
+    p.goodsCards =
+        [];
+
+
+    p.solarPanels =
+        [];
+
+
+    p.goodsE =
+        0;
+
+
+    p.solarE =
+        0;
+
+
+    p.netE =
+        0;
+
+
+    p.disconnected =
+        true;
+
+
+    p.finishedThisRound =
+        true;
+
+
+    state.solarPanelEligiblePlayers =
+        state.solarPanelEligiblePlayers.filter(
+            idx=>idx !== pIdx
+        );
+
+
+    state.solarPanelCompletedPlayers =
+        state.solarPanelCompletedPlayers.filter(
+            idx=>idx !== pIdx
+        );
+
+
+    appendLog(
+        `🔌 ${p.name}'s service was disconnected after causing a ${eventType}.`
+    );
+
+
+    appendLog(
+        `🔌 ${removedGoods} Goods card(s) and ${removedSolar} Solar Panel card(s) were permanently removed from play.`
+    );
+
+
+    appendLog(
+        `🏁 ${p.name}'s score was finalized at ${p.accumulatedHappiness} Accumulated Happiness Point(s).`
+    );
+
+
+    evaluateSystemDemand(
+        false
+    );
+
+
+    state.activePlayerIdx =
+        findNextUnfinishedPlayer(
             (
-                startIndex +
-                offset
+                pIdx + 1
             ) %
-            players.length;
+            players.length
+        );
 
 
-        if(
-            !players[idx].disconnected &&
-            !players[idx].finishedThisRound
-        ) {
-
-            return idx;
-
-        }
-
-    }
+    updateUserInterface();
 
 
-    return -1;
+    await showMessage(
 
-}
+        "🔌 Service Disconnected",
+
+        `
+
+            <div class="modal-event danger">
+
+                <strong>
+                    ${p.name}'s electrical service has been disconnected.
+                </strong>
+
+                <br><br>
+
+                Triggering Event:
+                <strong>${eventType}</strong>
+
+            </div>
 
 
-/* ============================================================
-   ALL PLAYERS FINISHED
-   ============================================================ */
+            <div class="modal-financial-grid">
 
-function allPlayersFinished() {
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Finalized Score
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:#a855f7;">
+
+                        ${p.accumulatedHappiness} pts
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Service Status
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--danger);">
+
+                        Disconnected
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);">
+
+                All Goods cards and Solar Panels owned by this
+                customer have been permanently removed from play.
+
+                <br><br>
+
+                Their demand and Solar generation have also
+                been removed from the neighborhood grid.
+
+                <br><br>
+
+                This customer receives no future turns,
+                Pay Days, utility bills, grid fees,
+                Solar opportunities, or Happiness accumulation.
+
+            </div>
+
+        `,
+
+        "🔌"
+
+    );
+
 
     const activePlayers =
         players.filter(
@@ -4285,435 +5198,12 @@ function allPlayersFinished() {
         );
 
 
-    if(activePlayers.length === 0) {
-
-        return false;
-
-    }
-
-
-    return activePlayers.every(
-        p=>p.finishedThisRound
-    );
-
-}
-
-
-/* ============================================================
-   FINISH PLAYER ROUND
-   ============================================================ */
-
-function finishPlayerRound(pIdx) {
-
-    const p =
-        players[pIdx];
-
-
     if(
-        !p ||
-        p.finishedThisRound ||
-        p.disconnected
+        activePlayers.length === 0
     ) {
 
-        return;
-
-    }
-
-
-    p.finishedThisRound = true;
-
-
-    appendLog(
-        `${p.name} finished their play for Round ${state.round}.`
-    );
-
-
-    if(pIdx === state.activePlayerIdx) {
-
-        state.activePlayerIdx =
-            findNextUnfinishedPlayer(
-                (
-                    pIdx + 1
-                ) %
-                players.length
-            );
-
-    }
-
-
-    if(
-        state.activePlayerIdx === -1 ||
-        players[
-            state.activePlayerIdx
-        ]?.finishedThisRound ||
-        players[
-            state.activePlayerIdx
-        ]?.disconnected
-    ) {
-
-        state.activePlayerIdx =
-            findNextUnfinishedPlayer(0);
-
-    }
-
-
-    if(allPlayersFinished()) {
-
-        state.activePlayerIdx = -1;
-
-        appendLog(
-            `All active players have finished Round ${state.round}. Pay Day is now available.`
-        );
-
-    }
-
-
-    updateUserInterface();
-
-
-    if(allPlayersFinished()) {
-
-        promptRoundSettlement();
-
-    }
-
-}
-
-
-/* ============================================================
-   TOGGLE DETAILS
-   ============================================================ */
-
-function togglePlayerDetails(pIdx) {
-
-    if(!players[pIdx]) return;
-
-    players[pIdx].showDetails =
-        !players[pIdx].showDetails;
-
-    updateUserInterface();
-
-}
-
-
-/* ============================================================
-   ESTABLISH PARAMETERS
-   ============================================================ */
-
-function establishGridParameters() {
-
-    if(setupMode === "random") {
-
-        state.capacity =
-            randomInteger(30,50);
-
-        state.brownoutLimit =
-            randomInteger(1,6);
-
-        state.capacityAdditions = [];
-
-
-        for(
-            let i=0;
-            i<state.brownoutLimit;
-            i++
-        ) {
-
-            state.capacityAdditions.push(
-                randomInteger(5,15)
-            );
-
-        }
-
-
-        state.randomized = true;
-
-    }
-
-    else {
-
-        const capacity =
-            parseInt(
-                document.getElementById(
-                    "initialCapacityInput"
-                ).value
-            );
-
-
-        if(
-            isNaN(capacity) ||
-            capacity<30 ||
-            capacity>50
-        ) {
-
-            showMessage(
-                "Invalid Grid Capacity",
-                "Initial capacity must be between <strong>30 and 50 electrons</strong>.",
-                "⚡"
-            );
-
-            return false;
-
-        }
-
-
-        const limit =
-            parseInt(
-                document.getElementById(
-                    "brownoutLimitInput"
-                ).value
-            );
-
-
-        if(
-            isNaN(limit) ||
-            limit<1 ||
-            limit>6
-        ) {
-
-            showMessage(
-                "Invalid Brownout Limit",
-                "The number of brownouts before blackout must be between <strong>1 and 6</strong>.",
-                "⚠️"
-            );
-
-            return false;
-
-        }
-
-
-        let additions = [];
-
-
-        for(let i=1;i<=limit;i++) {
-
-            const value =
-                parseInt(
-                    document.getElementById(
-                        `brownoutAdd${i}`
-                    ).value
-                );
-
-
-            if(
-                isNaN(value) ||
-                value<5 ||
-                value>15
-            ) {
-
-                showMessage(
-                    "Invalid Capacity Addition",
-                    `Capacity added after Brownout ${i} must be between <strong>5 and 15 electrons</strong>.`,
-                    "🔧"
-                );
-
-                return false;
-
-            }
-
-
-            additions.push(value);
-
-        }
-
-
-        state.capacity = capacity;
-
-        state.brownoutLimit = limit;
-
-        state.capacityAdditions = additions;
-
-        state.randomized = false;
-
-    }
-
-
-    return true;
-
-}
-
-
-/* ============================================================
-   START GAME
-   ============================================================ */
-
-async function commenceGridSimulation() {
-
-    if(players.length === 0) {
-
-        await showMessage(
-            "No Neighbors Registered",
-            "Please register at least one player before starting the grid manager.",
-            "🏠"
-        );
-
-        return;
-
-    }
-
-
-    if(!establishGridParameters()) {
-
-        return;
-
-    }
-
-
-    state.systemFinesEnabled =
-        selectedGamePolicies.systemFines;
-
-
-    state.flexibleBillingEnabled =
-        selectedGamePolicies.flexibleBilling;
-
-
-    state.systemUpdatesEnabled =
-        selectedGamePolicies.systemUpdates;
-
-
-    state.serviceDisconnectionEnabled =
-        selectedGamePolicies.serviceDisconnection;
-
-
-    state.electricityRate = 20;
-
-    state.highDemandActive = false;
-
-
-    players.forEach(
-        p=>p.finishedThisRound=false
-    );
-
-
-    document.getElementById(
-        "setupView"
-    ).style.display = "none";
-
-
-    document.getElementById(
-        "managerView"
-    ).style.display = "block";
-
-
-    document.getElementById(
-        "gridDashboard"
-    ).style.display = "grid";
-
-
-    state.activePlayerIdx =
-        state.startingPlayerIdx;
-
-
-    if(state.randomized) {
-
-        document.getElementById(
-            "demandDashboardCard"
-        ).style.display = "none";
-
-        document.getElementById(
-            "brownoutDashboardCard"
-        ).style.display = "none";
-
-    }
-
-    else {
-
-        document.getElementById(
-            "demandDashboardCard"
-        ).style.display = "block";
-
-        document.getElementById(
-            "brownoutDashboardCard"
-        ).style.display = "block";
-
-    }
-
-
-    evaluateSystemDemand();
-
-    updateBrownoutBoxes();
-
-    updateUserInterface();
-
-
-    appendLog(
-        `Grid initialized with ${state.capacity}e capacity.`
-    );
-
-
-    if(
-        !state.systemFinesEnabled &&
-        !state.flexibleBillingEnabled &&
-        !state.systemUpdatesEnabled &&
-        !state.serviceDisconnectionEnabled
-    ) {
-
-        appendLog(
-            "Game Policies: No Policies."
-        );
-
-    }
-
-    else {
-
-        const activePolicies = [];
-
-
-        if(state.systemFinesEnabled) {
-
-            activePolicies.push(
-                "System Fines for Exceeding Capacity"
-            );
-
-        }
-
-
-        if(state.flexibleBillingEnabled) {
-
-            activePolicies.push(
-                "Flexible Billing Rates"
-            );
-
-        }
-
-
-        if(state.systemUpdatesEnabled) {
-
-            activePolicies.push(
-                "System Updates for Customers"
-            );
-
-        }
-
-
-        if(state.serviceDisconnectionEnabled) {
-
-            activePolicies.push(
-                "Service Disconnection"
-            );
-
-        }
-
-
-        appendLog(
-            `Game Policies Active: ${
-                activePolicies.join(" + ")
-            }.`
-        );
-
-    }
-
-
-    if(!state.randomized) {
-
-        appendLog(
-            `Blackout threshold: ${state.brownoutLimit} brownout(s).`
-        );
-
-        appendLog(
-            `Capacity additions after brownouts: ${
-                state.capacityAdditions.join(", ")
-            }e.`
+        forceEndGame(
+            "allDisconnected"
         );
 
     }
@@ -4722,333 +5212,7 @@ async function commenceGridSimulation() {
 
 
 /* ============================================================
-   DEMAND
-   ============================================================ */
-
-function evaluateSystemDemand(
-    allowHighDemandTrigger = true
-) {
-
-    const currentLoad =
-        getCurrentSystemLoad();
-
-
-    document.getElementById(
-        "dispDemand"
-    ).innerText =
-        `${currentLoad} / ${state.capacity} e`;
-
-
-    if(currentLoad > state.capacity) {
-
-        document.getElementById(
-            "dispDemand"
-        ).style.color =
-            "var(--danger)";
-
-    }
-
-    else {
-
-        document.getElementById(
-            "dispDemand"
-        ).style.color =
-            "var(--text-main)";
-
-    }
-
-
-    evaluateFlexibleBilling(
-        currentLoad,
-        allowHighDemandTrigger
-    );
-
-
-    return currentLoad;
-
-}
-
-
-/* ============================================================
-   SOLAR PANEL SPECIAL TURN
-   ============================================================ */
-
-function getSolarPanelEligiblePlayers() {
-
-    return players
-        .map((p,index)=>{
-
-            return {
-
-                playerIndex:index,
-
-                cash:p.cash,
-
-                disconnected:p.disconnected
-
-            };
-
-        })
-        .filter(entry =>
-            !entry.disconnected &&
-            entry.cash >= 2000
-        );
-
-}
-
-
-/* ============================================================
-   START SOLAR PANEL-ONLY TURN SEQUENCE
-   ============================================================ */
-
-async function startSolarPanelOnlyTurns() {
-
-    const eligiblePlayers =
-        getSolarPanelEligiblePlayers();
-
-
-    if(eligiblePlayers.length === 0) {
-
-        return;
-
-    }
-
-
-    eligiblePlayers.forEach(entry => {
-
-        players[
-            entry.playerIndex
-        ].finishedThisRound = false;
-
-    });
-
-
-    state.normalTurnReturnIndex =
-        state.activePlayerIdx;
-
-
-    state.solarPanelEligiblePlayers =
-        eligiblePlayers.map(
-            entry=>entry.playerIndex
-        );
-
-
-    state.solarPanelCompletedPlayers = [];
-
-    state.solarPanelTurnIndex = 0;
-
-    state.solarPanelSpecialTurn = true;
-
-    state.solarPanelPurchasedDuringOpportunity = false;
-
-
-    state.activePlayerIdx =
-        state.solarPanelEligiblePlayers[0];
-
-
-    updateUserInterface();
-
-
-    await showMessage(
-        "☀️ Solar Panel Purchase Opportunity",
-        `
-        <div class="modal-event success">
-            <strong>Solar Panel purchasing is now available.</strong>
-            <br><br>
-            Every active player with
-            <strong>$2,000 or more in Wallet Cash</strong>
-            will receive one special Solar Panel-only turn.
-        </div>
-        `,
-        "☀️",
-        "Begin Solar Panel Turns"
-    );
-
-}
-
-
-/* ============================================================
-   ADVANCE SOLAR PANEL SPECIAL TURN
-   ============================================================ */
-
-async function advanceSolarPanelTurn() {
-
-    if(!state.solarPanelSpecialTurn) {
-
-        return;
-
-    }
-
-
-    const completedPlayerIdx =
-        state.activePlayerIdx;
-
-
-    if(
-        completedPlayerIdx !== -1 &&
-        !players[completedPlayerIdx]?.disconnected &&
-        state.solarPanelEligiblePlayers.includes(
-            completedPlayerIdx
-        ) &&
-        !state.solarPanelCompletedPlayers.includes(
-            completedPlayerIdx
-        )
-    ) {
-
-        state.solarPanelCompletedPlayers.push(
-            completedPlayerIdx
-        );
-
-    }
-
-
-    const nextEligiblePlayer =
-        state.solarPanelEligiblePlayers.find(
-            playerIndex =>
-                !players[playerIndex]?.disconnected &&
-                !state.solarPanelCompletedPlayers.includes(
-                    playerIndex
-                )
-        );
-
-
-    if(nextEligiblePlayer !== undefined) {
-
-        state.activePlayerIdx =
-            nextEligiblePlayer;
-
-        updateUserInterface();
-
-        return;
-
-    }
-
-
-    const returnIndex =
-        state.normalTurnReturnIndex;
-
-    const solarPanelWasPurchased =
-        state.solarPanelPurchasedDuringOpportunity;
-
-
-    state.solarPanelSpecialTurn = false;
-
-    state.solarPanelEligiblePlayers = [];
-
-    state.solarPanelCompletedPlayers = [];
-
-    state.solarPanelTurnIndex = 0;
-
-    state.normalTurnReturnIndex = -1;
-
-    state.solarPanelPurchasedDuringOpportunity = false;
-
-
-    state.activePlayerIdx =
-        returnIndex;
-
-
-    if(solarPanelWasPurchased) {
-
-        state.upgradeRequired = false;
-
-        document.getElementById(
-            "upgradeGridBtn"
-        ).style.display = "none";
-
-
-        let startingPoint =
-            state.activePlayerIdx;
-
-
-        if(startingPoint === -1) {
-
-            startingPoint = 0;
-
-        }
-
-
-        state.activePlayerIdx =
-            findNextUnfinishedPlayer(
-                startingPoint
-            );
-
-
-        evaluateSystemDemand(false);
-
-        updateUserInterface();
-
-        return;
-
-    }
-
-
-    if(state.upgradeRequired) {
-
-        await applyGridUpgrade();
-
-    }
-
-}
-
-
-/* ============================================================
-   NO PURCHASE
-   ============================================================ */
-
-async function noPurchase(pIdx) {
-
-    const p =
-        players[pIdx];
-
-
-    if(
-        !p ||
-        p.disconnected
-    ) {
-
-        return;
-
-    }
-
-
-    if(state.solarPanelSpecialTurn) {
-
-        if(
-            pIdx !== state.activePlayerIdx
-        ) {
-
-            return;
-
-        }
-
-
-        appendLog(
-            `${p.name} chose not to purchase a Solar Panel this special turn.`
-        );
-
-
-        await advanceSolarPanelTurn();
-
-        return;
-
-    }
-
-
-    if(state.upgradeRequired) {
-
-        return;
-
-    }
-
-
-    finishPlayerRound(pIdx);
-
-}
-
-
-/* ============================================================
-   AUTOMATIC FINANCIAL SHORTFALL
+   PAYMENTS
    ============================================================ */
 
 function collectPayment(
@@ -5077,31 +5241,56 @@ function collectPayment(
 
     const cashPaid =
         Math.min(
-            Math.max(0,player.cash),
+            Math.max(
+                0,
+                player.cash
+            ),
             amount
         );
 
 
-    player.cash -= cashPaid;
+    player.cash -=
+        cashPaid;
 
 
     const remaining =
-        amount - cashPaid;
+        amount -
+        cashPaid;
 
 
-    let happinessUsed = 0;
+    let happinessUsed =
+        0;
 
 
-    if(remaining > 0) {
+    if(
+        remaining > 0
+    ) {
 
         happinessUsed =
             Math.ceil(
-                remaining / 50
+                remaining /
+                50
             );
 
 
         player.happiness -=
             happinessUsed;
+
+    }
+
+
+    appendLog(
+        `${player.name} paid $${cashPaid.toLocaleString()} toward ${paymentName}.`
+    );
+
+
+    if(
+        happinessUsed > 0
+    ) {
+
+        appendLog(
+            `💔 ${player.name} used ${happinessUsed} Happiness Point(s) to cover the remaining balance.`
+        );
 
     }
 
@@ -5114,7 +5303,10 @@ function collectPayment(
 
         totalValue:
             cashPaid +
-            happinessUsed * 50
+            (
+                happinessUsed *
+                50
+            )
 
     };
 
@@ -5133,14 +5325,30 @@ async function showBrownoutEvent(
     happinessUsed
 ) {
 
-    let financialSection = "";
+    let policyDetails =
+        "";
 
 
-    if(state.systemFinesEnabled) {
+    if(
+        state.systemFinesEnabled
+    ) {
 
-        financialSection += `
+        policyDetails += `
 
             <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Fine Rate
+                    </div>
+
+                    <div class="modal-financial-value">
+                        $${state.systemFineRate}/e
+                    </div>
+
+                </div>
+
 
                 <div class="modal-financial-item">
 
@@ -5157,47 +5365,43 @@ async function showBrownoutEvent(
 
                 </div>
 
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Happiness Deduction
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:#a855f7;">
-
-                        ${
-                            happinessUsed > 0
-                                ? `-${happinessUsed} 😊`
-                                : "None"
-                        }
-
-                    </div>
-
-                </div>
-
             </div>
 
         `;
 
+
+        if(
+            happinessUsed > 0
+        ) {
+
+            policyDetails += `
+
+                <div style="
+                    margin-top:10px;
+                    color:#a855f7;">
+
+                    Happiness used to cover fine:
+                    <strong>
+                        ${happinessUsed} point(s)
+                    </strong>
+
+                </div>
+
+            `;
+
+        }
+
     }
 
+    else {
 
-    if(state.serviceDisconnectionEnabled) {
+        policyDetails += `
 
-        financialSection += `
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);">
 
-            <div class="modal-event danger">
-
-                <strong>
-                    🔌 Service Disconnection policy is active.
-                </strong>
-
-                <br><br>
-
-                ${player.name}'s service will be disconnected
-                because this purchase caused the brownout.
+                No System Fine applies to this brownout.
 
             </div>
 
@@ -5212,30 +5416,127 @@ async function showBrownoutEvent(
 
         `
 
-        <div class="modal-event danger">
+            <div class="modal-event danger">
 
-            <strong>
-                ⚠️ Neighborhood demand exceeded available capacity.
-            </strong>
+                <strong>
+                    Neighborhood demand exceeded available capacity.
+                </strong>
 
-            <br><br>
+                <br><br>
 
-            <strong>${player.name}</strong>'s purchase caused
-            demand to exceed the grid by
-            <strong>${excess} electron(s)</strong>.
+                <strong>${player.name}</strong>'s purchase
+                exceeded capacity by
 
-        </div>
+                <strong>${excess}e</strong>.
 
+            </div>
 
-        ${financialSection}
+            ${policyDetails}
+
+            ${
+                state.serviceDisconnectionEnabled
+                    ? `
+
+                    <div class="modal-event danger">
+
+                        <strong>
+                            🔌 Service Disconnection is active.
+                        </strong>
+
+                        <br><br>
+
+                        ${player.name}'s service will now
+                        be disconnected.
+
+                    </div>
+
+                    `
+                    : ""
+            }
 
         `,
 
-        "⚠️",
-
-        "Continue"
+        "⚠️"
 
     );
+
+}
+
+
+/* ============================================================
+   FINISH ROUND
+   ============================================================ */
+
+async function promptFinishRound(
+    pIdx
+) {
+
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        p.disconnected ||
+        p.finishedThisRound
+    ) {
+
+        return;
+
+    }
+
+
+    const finish =
+        await openGameModal({
+
+            title:
+                `${p.name}: Finish for This Round?`,
+
+            icon:"🏁",
+
+            body:`
+
+                <div class="modal-event success">
+
+                    <strong>
+                        Purchase complete.
+                    </strong>
+
+                    <br><br>
+
+                    Would you like to finish your play
+                    for Round ${state.round}?
+
+                </div>
+
+            `,
+
+            buttons:[
+
+                {
+                    text:"Continue Round",
+                    className:"secondary",
+                    value:false
+                },
+
+                {
+                    text:"Finish for This Round",
+                    className:"success",
+                    value:true
+                }
+
+            ]
+
+        });
+
+
+    if(finish) {
+
+        finishPlayerRound(
+            pIdx
+        );
+
+    }
 
 }
 
@@ -5257,7 +5558,8 @@ async function buyCard(
     if(
         !p ||
         p.disconnected ||
-        pIdx !== state.activePlayerIdx
+        pIdx !==
+            state.activePlayerIdx
     ) {
 
         return;
@@ -5268,26 +5570,6 @@ async function buyCard(
     if(
         state.upgradeRequired &&
         !state.solarPanelSpecialTurn
-    ) {
-
-        return;
-
-    }
-
-
-    if(
-        !state.solarPanelSpecialTurn &&
-        p.finishedThisRound
-    ) {
-
-        return;
-
-    }
-
-
-    if(
-        state.solarPanelSpecialTurn &&
-        cardType !== "blue"
     ) {
 
         return;
@@ -5307,7 +5589,7 @@ async function buyCard(
             : "solar";
 
 
-    const houseCollection =
+    const collection =
         houseType === "goods"
             ? p.goodsCards
             : p.solarPanels;
@@ -5325,8 +5607,7 @@ async function buyCard(
 
     if(
         !card ||
-        card.quantity <= 0 ||
-        p.cash < card.price
+        card.quantity <= 0
     ) {
 
         return;
@@ -5334,10 +5615,35 @@ async function buyCard(
     }
 
 
-    let selectedDiscardIndex = -1;
+    if(
+        p.cash <
+        card.price
+    ) {
+
+        await showMessage(
+
+            "Insufficient Funds",
+
+            `${p.name} does not have enough cash to purchase this card.`,
+
+            "💰"
+
+        );
 
 
-    if(houseCollection.length >= houseCapacity) {
+        return;
+
+    }
+
+
+    let selectedDiscardIndex =
+        -1;
+
+
+    if(
+        collection.length >=
+        houseCapacity
+    ) {
 
         selectedDiscardIndex =
             await chooseHouseCardToDiscard(
@@ -5348,8 +5654,7 @@ async function buyCard(
 
 
         if(
-            selectedDiscardIndex === -1 ||
-            selectedDiscardIndex === undefined
+            selectedDiscardIndex < 0
         ) {
 
             return;
@@ -5366,54 +5671,52 @@ async function buyCard(
 
             `
 
-            <div class="modal-event">
+                <div class="modal-event">
 
-                <strong>
-                    You are purchasing:
-                </strong>
+                    <strong>
+                        ${
+                            cardType === "yellow"
+                                ? "🛒 Goods"
+                                : "☀️ Solar Panel"
+                        }
 
-                <br><br>
-
-                ${cardType === "yellow"
-                    ? "🛒 Goods Card"
-                    : "☀️ Solar Panel Card"}
-
-                <strong>${card.id}</strong>
-
-            </div>
-
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Price
-                    </div>
-
-                    <div class="modal-financial-value">
-                        $${card.price.toLocaleString()}
-                    </div>
+                        ${card.id}
+                    </strong>
 
                 </div>
 
 
-                <div class="modal-financial-item">
+                <div class="modal-financial-grid">
 
-                    <div class="modal-financial-label">
-                        Happiness
+                    <div class="modal-financial-item">
+
+                        <div class="modal-financial-label">
+                            Price
+                        </div>
+
+                        <div class="modal-financial-value">
+                            $${card.price.toLocaleString()}
+                        </div>
+
                     </div>
 
-                    <div class="modal-financial-value"
-                         style="color:#a855f7;">
 
-                        +${card.happiness} 😊
+                    <div class="modal-financial-item">
+
+                        <div class="modal-financial-label">
+                            Happiness
+                        </div>
+
+                        <div class="modal-financial-value"
+                             style="color:#a855f7;">
+
+                            +${card.happiness}
+
+                        </div>
 
                     </div>
 
                 </div>
-
-            </div>
 
             `,
 
@@ -5433,7 +5736,7 @@ async function buyCard(
     }
 
 
-    const systemUpdateApproved =
+    const updateApproved =
         await promptSystemUpdateForPurchase(
             p,
             cardType,
@@ -5442,14 +5745,23 @@ async function buyCard(
         );
 
 
-    if(!systemUpdateApproved) {
+    if(
+        !updateApproved
+    ) {
 
         return;
 
     }
 
 
-    if(houseCollection.length >= houseCapacity) {
+    /*
+     * Commit discard only after all confirmations.
+     */
+
+    if(
+        collection.length >=
+        houseCapacity
+    ) {
 
         discardHouseCard(
             p,
@@ -5460,18 +5772,28 @@ async function buyCard(
     }
 
 
-    card.quantity -= 1;
+    card.quantity -=
+        1;
 
-    state.anyPurchases = true;
 
-    p.cash -= card.price;
+    state.anyPurchases =
+        true;
+
+
+    p.cash -=
+        card.price;
 
 
     const houseCard =
-        createHouseCard(card);
+        createHouseCard(
+            card
+        );
 
 
-    if(cardType === "yellow") {
+    if(
+        cardType ===
+        "yellow"
+    ) {
 
         p.goodsCards.push(
             houseCard
@@ -5479,7 +5801,9 @@ async function buyCard(
 
 
         p.goodsE +=
-            Math.abs(card.electrons);
+            Math.abs(
+                card.electrons
+            );
 
 
         p.happiness +=
@@ -5491,13 +5815,22 @@ async function buyCard(
             p.goodsE;
 
 
+        appendLog(
+            `${p.name} purchased ${card.id} for $${card.price.toLocaleString()}.`
+        );
+
+
         const load =
             evaluateSystemDemand();
 
 
-        if(load > state.capacity) {
+        if(
+            load >
+            state.capacity
+        ) {
 
-            state.brownouts += 1;
+            state.brownouts +=
+                1;
 
 
             const excess =
@@ -5510,7 +5843,8 @@ async function buyCard(
                 state.brownoutLimit;
 
 
-            let fineAmount = 0;
+            let fineAmount =
+                0;
 
 
             let payment = {
@@ -5520,18 +5854,45 @@ async function buyCard(
             };
 
 
-            if(state.systemFinesEnabled) {
+            if(
+                state.systemFinesEnabled
+            ) {
+
+                /*
+                 * Dynamic System Fine.
+                 */
 
                 fineAmount =
-                    excess * 50;
+                    excess *
+                    state.systemFineRate;
 
 
                 payment =
                     collectPayment(
+
                         p,
+
                         fineAmount,
-                        `the Brownout ${state.brownouts} fine`
+
+                        `Brownout ${state.brownouts} System Fine`
+
                     );
+
+            }
+
+
+            appendLog(
+                `⚠️ Brownout ${state.brownouts}: ${excess}e over capacity.`
+            );
+
+
+            if(
+                state.systemFinesEnabled
+            ) {
+
+                appendLog(
+                    `⚠️ Fine calculated at $${state.systemFineRate}/e = $${fineAmount.toLocaleString()}.`
+                );
 
             }
 
@@ -5540,26 +5901,32 @@ async function buyCard(
 
 
             await showBrownoutEvent(
+
                 p,
+
                 state.brownouts,
+
                 excess,
+
                 fineAmount,
+
                 payment.happinessUsed || 0
+
             );
 
 
-            /*
-             * Service Disconnection occurs after the triggering
-             * purchase and brownout consequences are processed.
-             */
-
-            if(state.serviceDisconnectionEnabled) {
+            if(
+                state.serviceDisconnectionEnabled
+            ) {
 
                 await disconnectPlayerService(
+
                     pIdx,
+
                     isBlackout
                         ? "blackout"
                         : "brownout"
+
                 );
 
             }
@@ -5567,14 +5934,18 @@ async function buyCard(
 
             if(isBlackout) {
 
-                forceEndGame("blackout");
+                forceEndGame(
+                    "blackout"
+                );
+
 
                 return;
 
             }
 
 
-            state.upgradeRequired = true;
+            state.upgradeRequired =
+                true;
 
 
             document.getElementById(
@@ -5587,6 +5958,7 @@ async function buyCard(
 
 
             await applyGridUpgrade();
+
 
             return;
 
@@ -5614,15 +5986,27 @@ async function buyCard(
             p.goodsE;
 
 
+        appendLog(
+            `${p.name} purchased Solar Panel ${card.id}.`
+        );
+
+
+        /*
+         * Solar purchase resets Flexible Billing.
+         */
+
         if(
             state.flexibleBillingEnabled
         ) {
 
             resetFlexibleBillingRate(
-                "after Solar Panel generation reduced neighborhood demand"
+                "after Solar Panel generation reduced demand"
             );
 
-            evaluateSystemDemand(false);
+
+            evaluateSystemDemand(
+                false
+            );
 
         }
 
@@ -5633,16 +6017,21 @@ async function buyCard(
         }
 
 
-        if(state.solarPanelSpecialTurn) {
+        if(
+            state.solarPanelSpecialTurn
+        ) {
 
-            state.solarPanelPurchasedDuringOpportunity = true;
+            state.solarPanelPurchasedDuringOpportunity =
+                true;
 
         }
 
     }
 
 
-    if(state.solarPanelSpecialTurn) {
+    if(
+        state.solarPanelSpecialTurn
+    ) {
 
         updateUserInterface();
 
@@ -5672,9 +6061,13 @@ async function buyCard(
     updateUserInterface();
 
 
-    if(!p.disconnected) {
+    if(
+        !p.disconnected
+    ) {
 
-        await promptFinishRound(pIdx);
+        await promptFinishRound(
+            pIdx
+        );
 
     }
 
@@ -5693,7 +6086,8 @@ function updateBrownoutBoxes() {
         );
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     for(
@@ -5703,7 +6097,9 @@ function updateBrownoutBoxes() {
     ) {
 
         const box =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         box.id =
@@ -5714,10 +6110,13 @@ function updateBrownoutBoxes() {
             "bo-box";
 
 
-        box.innerText = i;
+        box.innerText =
+            i;
 
 
-        container.appendChild(box);
+        container.appendChild(
+            box
+        );
 
     }
 
@@ -5747,23 +6146,43 @@ function updateBrownoutBoxes() {
 
 
 /* ============================================================
-   GRID UPGRADE
+   SOLAR PANEL SPECIAL TURN
    ============================================================ */
 
-async function applyGridUpgrade() {
+function getSolarPanelEligiblePlayers() {
 
-    const nextUpgradeIndex =
-        state.brownouts - 1;
+    return players
+        .map(
+            (
+                p,
+                index
+            )=>({
+
+                playerIndex:index,
+
+                cash:p.cash,
+
+                disconnected:p.disconnected
+
+            })
+        )
+        .filter(
+            entry =>
+                !entry.disconnected &&
+                entry.cash >= 2000
+        );
+
+}
 
 
-    const capacityIncrease =
-        state.capacityAdditions[
-            nextUpgradeIndex
-        ];
+async function startSolarPanelOnlyTurns() {
+
+    const eligible =
+        getSolarPanelEligiblePlayers();
 
 
     if(
-        capacityIncrease === undefined
+        eligible.length === 0
     ) {
 
         return;
@@ -5771,7 +6190,219 @@ async function applyGridUpgrade() {
     }
 
 
-    const currentTierFee =
+    state.normalTurnReturnIndex =
+        state.activePlayerIdx;
+
+
+    state.solarPanelEligiblePlayers =
+        eligible.map(
+            e=>e.playerIndex
+        );
+
+
+    state.solarPanelCompletedPlayers =
+        [];
+
+
+    state.solarPanelSpecialTurn =
+        true;
+
+
+    state.solarPanelPurchasedDuringOpportunity =
+        false;
+
+
+    state.activePlayerIdx =
+        state.solarPanelEligiblePlayers[0];
+
+
+    updateUserInterface();
+
+
+    await showMessage(
+
+        "☀️ Solar Panel Purchase Opportunity",
+
+        `
+
+            <div class="modal-event success">
+
+                Active customers with
+                <strong>$2,000 or more</strong>
+                receive one Solar Panel-only turn.
+
+            </div>
+
+        `,
+
+        "☀️",
+
+        "Begin"
+
+    );
+
+}
+
+
+async function advanceSolarPanelTurn() {
+
+    if(
+        !state.solarPanelSpecialTurn
+    ) {
+
+        return;
+
+    }
+
+
+    const current =
+        state.activePlayerIdx;
+
+
+    if(
+        current !== -1 &&
+        !players[current]?.disconnected &&
+        !state.solarPanelCompletedPlayers.includes(
+            current
+        )
+    ) {
+
+        state.solarPanelCompletedPlayers.push(
+            current
+        );
+
+    }
+
+
+    const next =
+        state.solarPanelEligiblePlayers.find(
+            idx =>
+                !players[idx]?.disconnected &&
+                !state.solarPanelCompletedPlayers.includes(
+                    idx
+                )
+        );
+
+
+    if(
+        next !== undefined
+    ) {
+
+        state.activePlayerIdx =
+            next;
+
+
+        updateUserInterface();
+
+
+        return;
+
+    }
+
+
+    const purchased =
+        state.solarPanelPurchasedDuringOpportunity;
+
+
+    const returnIndex =
+        state.normalTurnReturnIndex;
+
+
+    state.solarPanelSpecialTurn =
+        false;
+
+
+    state.solarPanelEligiblePlayers =
+        [];
+
+
+    state.solarPanelCompletedPlayers =
+        [];
+
+
+    state.normalTurnReturnIndex =
+        -1;
+
+
+    state.solarPanelPurchasedDuringOpportunity =
+        false;
+
+
+    state.activePlayerIdx =
+        returnIndex;
+
+
+    if(purchased) {
+
+        state.upgradeRequired =
+            false;
+
+
+        document.getElementById(
+            "upgradeGridBtn"
+        ).style.display =
+            "none";
+
+
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(
+                state.activePlayerIdx === -1
+                    ? 0
+                    : state.activePlayerIdx
+            );
+
+
+        evaluateSystemDemand(
+            false
+        );
+
+
+        updateUserInterface();
+
+
+        return;
+
+    }
+
+
+    if(
+        state.upgradeRequired
+    ) {
+
+        await applyGridUpgrade();
+
+    }
+
+}
+
+
+/* ============================================================
+   GRID UPGRADE
+   ============================================================ */
+
+async function applyGridUpgrade() {
+
+    const index =
+        state.brownouts -
+        1;
+
+
+    const increase =
+        state.capacityAdditions[
+            index
+        ];
+
+
+    if(
+        increase === undefined
+    ) {
+
+        return;
+
+    }
+
+
+    const fee =
         state.brownouts === 1
             ? 20
             : state.brownouts === 2
@@ -5779,16 +6410,16 @@ async function applyGridUpgrade() {
                 : 60;
 
 
-    const solarEligiblePlayers =
-        getSolarPanelEligiblePlayers();
+    const buttons =
+        [];
 
 
-    const upgradeButtons = [];
+    if(
+        getSolarPanelEligiblePlayers()
+            .length > 0
+    ) {
 
-
-    if(solarEligiblePlayers.length > 0) {
-
-        upgradeButtons.push({
+        buttons.push({
 
             text:"Purchase Solar Panel",
 
@@ -5801,7 +6432,7 @@ async function applyGridUpgrade() {
     }
 
 
-    upgradeButtons.push({
+    buttons.push({
 
         text:"Approve Upgrade",
 
@@ -5818,20 +6449,22 @@ async function applyGridUpgrade() {
             title:
                 "Grid Capacity Upgrade",
 
+            icon:"🔧",
+
             body:`
 
                 <div class="modal-event warning">
 
                     <strong>
-                        ⚡ Grid capacity must be expanded.
+                        Grid capacity must be expanded.
                     </strong>
 
                     <br><br>
 
                     ${
                         state.randomized
-                            ? "The required capacity increase remains hidden."
-                            : `Add <strong>${capacityIncrease} electrons</strong> to the grid.`
+                            ? "Capacity increase remains hidden."
+                            : `Capacity will increase by <strong>${increase}e</strong>.`
                     }
 
                 </div>
@@ -5841,23 +6474,22 @@ async function applyGridUpgrade() {
                     margin-top:15px;
                     color:var(--text-muted);">
 
-                    Approving this upgrade permanently adds
-                    <strong>$${currentTierFee}/round</strong>
-                    to every active neighbor's grid fee.
+                    Grid fee increase:
+                    <strong>$${fee}/round</strong>
+                    for every active neighbor.
 
                 </div>
 
             `,
 
-            icon:"🔧",
-
-            buttons:
-                upgradeButtons
+            buttons
 
         });
 
 
-    if(choice === "solar") {
+    if(
+        choice === "solar"
+    ) {
 
         await startSolarPanelOnlyTurns();
 
@@ -5866,7 +6498,9 @@ async function applyGridUpgrade() {
     }
 
 
-    if(choice !== "upgrade") {
+    if(
+        choice !== "upgrade"
+    ) {
 
         return;
 
@@ -5874,22 +6508,27 @@ async function applyGridUpgrade() {
 
 
     state.capacity +=
-        capacityIncrease;
+        increase;
 
 
     state.feePerRound +=
-        currentTierFee;
+        fee;
 
 
-    state.upgradeRequired = false;
+    state.upgradeRequired =
+        false;
 
+
+    /*
+     * Capacity expansion resets flexible billing.
+     */
 
     if(
         state.flexibleBillingEnabled
     ) {
 
         resetFlexibleBillingRate(
-            "after the grid capacity expansion"
+            "after grid capacity expansion"
         );
 
     }
@@ -5901,27 +6540,23 @@ async function applyGridUpgrade() {
         "none";
 
 
-    let startingPoint =
-        state.activePlayerIdx;
-
-
-    if(
-        startingPoint === -1 ||
-        players[startingPoint]?.disconnected
-    ) {
-
-        startingPoint = 0;
-
-    }
+    appendLog(
+        `🔧 Grid capacity increased by ${increase}e. Grid fee increased by $${fee}/round.`
+    );
 
 
     state.activePlayerIdx =
         findNextUnfinishedPlayer(
-            startingPoint
+            state.activePlayerIdx === -1
+                ? 0
+                : state.activePlayerIdx
         );
 
 
-    evaluateSystemDemand(false);
+    evaluateSystemDemand(
+        false
+    );
+
 
     updateUserInterface();
 
@@ -5929,10 +6564,70 @@ async function applyGridUpgrade() {
 
 
 /* ============================================================
-   ROUND-END PAYMENTS
+   NO PURCHASE
    ============================================================ */
 
-async function executeRoundEndPayments() {
+async function noPurchase(
+    pIdx
+) {
+
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        p.disconnected
+    ) {
+
+        return;
+
+    }
+
+
+    if(
+        state.solarPanelSpecialTurn
+    ) {
+
+        if(
+            pIdx !==
+            state.activePlayerIdx
+        ) {
+
+            return;
+
+        }
+
+
+        await advanceSolarPanelTurn();
+
+
+        return;
+
+    }
+
+
+    if(
+        state.upgradeRequired
+    ) {
+
+        return;
+
+    }
+
+
+    finishPlayerRound(
+        pIdx
+    );
+
+}
+
+
+/* ============================================================
+   ROUND SETTLEMENT
+   ============================================================ */
+
+async function promptRoundSettlement() {
 
     if(
         !allPlayersFinished() ||
@@ -5944,11 +6639,79 @@ async function executeRoundEndPayments() {
     }
 
 
+    await openGameModal({
+
+        title:
+            "Process Pay Day & Utility Bills",
+
+        icon:"💰",
+
+        body:`
+
+            <div class="modal-event success">
+
+                All active players have finished Round
+                <strong>${state.round}</strong>.
+
+            </div>
+
+            ${
+                state.flexibleBillingEnabled
+                    ? `
+
+                    <div style="
+                        margin-top:15px;
+                        color:var(--text-muted);">
+
+                        Current utility billing rate:
+
+                        <strong>
+                            $${state.electricityRate}/e
+                        </strong>
+
+                        ${
+                            state.highDemandActive
+                                ? "(High-Demand Rate)"
+                                : "(Normal Rate)"
+                        }
+
+                    </div>
+
+                    `
+                    : ""
+            }
+
+        `,
+
+        buttons:[
+
+            {
+                text:"Process Pay Day & Utility Bills",
+                className:"success",
+                value:true
+            }
+
+        ]
+
+    });
+
+
+    await executeRoundEndPayments();
+
+}
+
+
+async function executeRoundEndPayments() {
+
     const activePlayers =
         players.filter(
             p=>!p.disconnected
         );
 
+
+    /*
+     * Disconnected players are intentionally excluded.
+     */
 
     activePlayers.forEach(p=>{
 
@@ -5958,49 +6721,63 @@ async function executeRoundEndPayments() {
     });
 
 
-    const financialEvents = [];
+    const financialEvents =
+        [];
 
 
     activePlayers.forEach(p=>{
 
-        const payDay = 500;
+        const payDay =
+            500;
 
+
+        /*
+         * Dynamic Flexible Billing rate.
+         */
 
         const utilityRate =
             state.flexibleBillingEnabled
                 ? state.electricityRate
-                : 20;
+                : state.normalElectricityRate;
 
 
         const utilityBill =
             p.netE < 0
-                ? Math.abs(p.netE) *
+                ? Math.abs(
+                    p.netE
+                ) *
                   utilityRate
                 : 0;
 
 
+        /*
+         * Surplus income stays fixed at $20/e.
+         */
+
         const surplusPayment =
             p.netE > 0
-                ? p.netE * 20
+                ? p.netE *
+                  state.normalElectricityRate
                 : 0;
 
 
-        p.cash += payDay;
+        p.cash +=
+            payDay;
 
 
-        if(surplusPayment > 0) {
-
-            p.cash +=
-                surplusPayment;
-
-        }
+        p.cash +=
+            surplusPayment;
 
 
         const utilityPayment =
             collectPayment(
+
                 p,
+
                 utilityBill,
+
                 "their utility bill"
+
             );
 
 
@@ -6010,9 +6787,13 @@ async function executeRoundEndPayments() {
 
         const gridFeePayment =
             collectPayment(
+
                 p,
+
                 gridFee,
+
                 "their grid fee"
+
             );
 
 
@@ -6057,19 +6838,34 @@ async function executeRoundEndPayments() {
     updateUserInterface();
 
 
-    let settlementHTML = `
+    let html = `
 
         <div class="modal-event success">
 
             <strong>
-                💰 Round ${state.round} financial settlement complete.
+                Round ${state.round} settlement complete.
             </strong>
 
-            <br><br>
+            ${
+                state.flexibleBillingEnabled
+                    ? `
 
-            Pay Day, utility bills, surplus payments,
-            and grid fees have been processed for all
-            active customers.
+                    <br><br>
+
+                    Utility billing rate:
+                    <strong>
+                        $${state.electricityRate}/e
+                    </strong>
+
+                    ${
+                        state.highDemandActive
+                            ? "(High-Demand Rate)"
+                            : "(Normal Rate)"
+                    }
+
+                    `
+                    : ""
+            }
 
         </div>
 
@@ -6082,7 +6878,7 @@ async function executeRoundEndPayments() {
             event.player;
 
 
-        settlementHTML += `
+        html += `
 
             <div style="
                 margin-top:12px;
@@ -6095,31 +6891,98 @@ async function executeRoundEndPayments() {
                     🏠 ${p.name}
                 </strong>
 
+
                 <div style="
                     display:grid;
                     grid-template-columns:1fr 1fr;
-                    gap:5px;
+                    gap:6px;
                     margin-top:8px;
                     font-size:0.85rem;">
 
-                    <span>Pay Day:</span>
+                    <span>
+                        Pay Day:
+                    </span>
+
                     <strong style="color:var(--success);">
                         +$${event.payDay.toLocaleString()}
                     </strong>
 
-                    <span>Utility Bill:</span>
+
+                    ${
+                        event.surplusPayment > 0
+                            ? `
+
+                            <span>
+                                Surplus Income:
+                            </span>
+
+                            <strong style="color:var(--success);">
+                                +$${event.surplusPayment.toLocaleString()}
+                            </strong>
+
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        state.flexibleBillingEnabled
+                            ? `
+
+                            <span>
+                                Utility Rate:
+                            </span>
+
+                            <strong style="
+                                color:${
+                                    event.utilityRate ===
+                                    state.highDemandRate
+                                        ? "var(--warning)"
+                                        : "var(--text-main)"
+                                };">
+
+                                $${event.utilityRate}/e
+
+                            </strong>
+
+                            `
+                            : ""
+                    }
+
+
+                    <span>
+                        Utility Bill:
+                    </span>
+
                     <strong style="color:var(--danger);">
                         -$${event.utilityBill.toLocaleString()}
                     </strong>
 
-                    <span>Grid Fee:</span>
+
+                    <span>
+                        Grid Fee:
+                    </span>
+
                     <strong style="color:var(--danger);">
                         -$${event.gridFee.toLocaleString()}
                     </strong>
 
-                    <span>Accumulated Happiness:</span>
+
+                    <span>
+                        Happiness:
+                    </span>
+
                     <strong style="color:#a855f7;">
-                        ${p.accumulatedHappiness} pts
+                        ${p.happiness}
+                    </strong>
+
+
+                    <span>
+                        Accumulated Happiness:
+                    </span>
+
+                    <strong style="color:#a855f7;">
+                        ${p.accumulatedHappiness}
                     </strong>
 
                 </div>
@@ -6135,7 +6998,7 @@ async function executeRoundEndPayments() {
 
         `Round ${state.round} Settlement`,
 
-        settlementHTML,
+        html,
 
         "💰",
 
@@ -6144,22 +7007,32 @@ async function executeRoundEndPayments() {
     );
 
 
-    if(!state.anyPurchases) {
+    if(
+        !state.anyPurchases
+    ) {
 
-        state.stagnantCount += 1;
+        state.stagnantCount +=
+            1;
 
     }
 
     else {
 
-        state.stagnantCount = 0;
+        state.stagnantCount =
+            0;
 
     }
 
 
-    if(state.stagnantCount >= 4) {
+    if(
+        state.stagnantCount >=
+        4
+    ) {
 
-        forceEndGame("balanced");
+        forceEndGame(
+            "balanced"
+        );
+
 
         return;
 
@@ -6175,16 +7048,22 @@ async function executeRoundEndPayments() {
         players.length;
 
 
-    state.round += 1;
+    state.round +=
+        1;
 
-    state.anyPurchases = false;
+
+    state.anyPurchases =
+        false;
 
 
     players.forEach(p=>{
 
-        if(!p.disconnected) {
+        if(
+            !p.disconnected
+        ) {
 
-            p.finishedThisRound = false;
+            p.finishedThisRound =
+                false;
 
         }
 
@@ -6208,7 +7087,7 @@ async function executeRoundEndPayments() {
 
 function createHouseSlotHTML(
     card,
-    cardType
+    type
 ) {
 
     if(!card) {
@@ -6233,7 +7112,7 @@ function createHouseSlotHTML(
         <div class="
             house-slot
             ${
-                cardType === "goods"
+                type === "goods"
                     ? "occupied-goods"
                     : "occupied-solar"
             }">
@@ -6241,7 +7120,7 @@ function createHouseSlotHTML(
             <div class="house-slot-id">
 
                 ${
-                    cardType === "goods"
+                    type === "goods"
                         ? "🛒"
                         : "☀️"
                 }
@@ -6250,10 +7129,11 @@ function createHouseSlotHTML(
 
             </div>
 
+
             <div class="house-slot-details">
 
                 ${
-                    cardType === "goods"
+                    type === "goods"
                         ? `⚡ ${Math.abs(card.electrons)}e use`
                         : `⚡ +${card.electrons}e`
                 }
@@ -6271,12 +7151,19 @@ function createHouseSlotHTML(
 }
 
 
-function createHouseHTML(p) {
+function createHouseHTML(
+    p
+) {
 
-    const goodsSlots = [];
+    const goodsSlots =
+        [];
 
 
-    for(let i=0;i<4;i++) {
+    for(
+        let i=0;
+        i<4;
+        i++
+    ) {
 
         goodsSlots.push(
             createHouseSlotHTML(
@@ -6288,10 +7175,15 @@ function createHouseHTML(p) {
     }
 
 
-    const solarSlots = [];
+    const solarSlots =
+        [];
 
 
-    for(let i=0;i<2;i++) {
+    for(
+        let i=0;
+        i<2;
+        i++
+    ) {
 
         solarSlots.push(
             createHouseSlotHTML(
@@ -6332,8 +7224,8 @@ function createHouseHTML(p) {
 
                         <br><br>
 
-                        All Goods cards and Solar Panels were
-                        permanently removed from play.
+                        All Goods and Solar cards have
+                        been permanently removed from play.
 
                     </div>
 
@@ -6346,7 +7238,9 @@ function createHouseHTML(p) {
 
                 <div class="house-category-title">
 
-                    <span>🛒 Goods</span>
+                    <span>
+                        🛒 Goods
+                    </span>
 
                     <span>
                         ${p.goodsCards.length} / 4
@@ -6356,9 +7250,7 @@ function createHouseHTML(p) {
 
 
                 <div class="house-slots">
-
                     ${goodsSlots.join("")}
-
                 </div>
 
             </div>
@@ -6368,7 +7260,9 @@ function createHouseHTML(p) {
 
                 <div class="house-category-title">
 
-                    <span>☀️ Solar Panels</span>
+                    <span>
+                        ☀️ Solar Panels
+                    </span>
 
                     <span>
                         ${p.solarPanels.length} / 2
@@ -6378,9 +7272,7 @@ function createHouseHTML(p) {
 
 
                 <div class="house-slots solar-slots">
-
                     ${solarSlots.join("")}
-
                 </div>
 
             </div>
@@ -6416,25 +7308,32 @@ function updateUserInterface() {
         );
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
-    players.forEach((p,idx)=>{
+    players.forEach(
+        (
+            p,
+            idx
+        )=>{
 
         const isCurrentTurn =
             idx ===
             state.activePlayerIdx;
 
 
-        const card =
-            document.createElement("div");
+        const playerCard =
+            document.createElement(
+                "div"
+            );
 
 
-        card.className =
+        playerCard.className =
             `player-card ${
                 isCurrentTurn &&
-                !p.disconnected &&
-                !p.finishedThisRound
+                !p.finishedThisRound &&
+                !p.disconnected
                     ? "active-turn"
                     : ""
             } ${
@@ -6448,12 +7347,15 @@ function updateUserInterface() {
             }`;
 
 
-        let turnBadge;
+        let badge =
+            "";
 
 
-        if(p.disconnected) {
+        if(
+            p.disconnected
+        ) {
 
-            turnBadge = `
+            badge = `
 
                 <span class="turn-badge disconnected">
                     🔌 Service Disconnected
@@ -6468,7 +7370,7 @@ function updateUserInterface() {
             isCurrentTurn
         ) {
 
-            turnBadge = `
+            badge = `
 
                 <span class="turn-badge active">
                     ☀️ Solar Panel Turn
@@ -6478,9 +7380,11 @@ function updateUserInterface() {
 
         }
 
-        else if(p.finishedThisRound) {
+        else if(
+            p.finishedThisRound
+        ) {
 
-            turnBadge = `
+            badge = `
 
                 <span class="turn-badge finished">
                     ✓ Finished
@@ -6490,9 +7394,11 @@ function updateUserInterface() {
 
         }
 
-        else if(isCurrentTurn) {
+        else if(
+            isCurrentTurn
+        ) {
 
-            turnBadge = `
+            badge = `
 
                 <span class="turn-badge active">
                     Active Turn
@@ -6504,7 +7410,7 @@ function updateUserInterface() {
 
         else {
 
-            turnBadge = `
+            badge = `
 
                 <span class="turn-badge">
                     Waiting
@@ -6515,12 +7421,15 @@ function updateUserInterface() {
         }
 
 
-        let gameplayPanel;
+        let gameplay =
+            "";
 
 
-        if(p.disconnected) {
+        if(
+            p.disconnected
+        ) {
 
-            gameplayPanel = `
+            gameplay = `
 
                 <div class="card-selection">
 
@@ -6532,14 +7441,14 @@ function updateUserInterface() {
 
                         <br><br>
 
-                        Service was disconnected in Round
+                        Score finalized in Round
                         ${p.disconnectedRound}.
 
                         <br><br>
 
-                        Finalized Accumulated Happiness:
+                        Final Accumulated Happiness:
                         <strong>
-                            ${p.accumulatedHappiness} pts
+                            ${p.accumulatedHappiness}
                         </strong>
 
                     </div>
@@ -6555,7 +7464,7 @@ function updateUserInterface() {
             isCurrentTurn
         ) {
 
-            gameplayPanel = `
+            gameplay = `
 
                 <div class="card-selection">
 
@@ -6575,46 +7484,50 @@ function updateUserInterface() {
 
                     <div class="card-options">
 
-                        ${
-                            solarPanelCards.map(
-                                (c,i)=>`
+                    ${
+                        solarPanelCards.map(
+                            (
+                                c,
+                                i
+                            )=>`
 
-                                <button
-                                    class="game-card solar"
+                            <button
+                                class="game-card solar"
 
-                                    ${
-                                        c.quantity<=0 ||
-                                        p.cash<c.price
-                                            ? "disabled"
-                                            : ""
-                                    }
+                                ${
+                                    c.quantity <= 0 ||
+                                    p.cash < c.price
+                                        ? "disabled"
+                                        : ""
+                                }
 
-                                    onclick="
-                                        buyCard(
-                                            ${idx},
-                                            'blue',
-                                            ${i}
-                                        )
-                                    ">
+                                onclick="
+                                    buyCard(
+                                        ${idx},
+                                        'blue',
+                                        ${i}
+                                    )
+                                ">
 
-                                    <div class="game-card-price">
-                                        $${c.price.toLocaleString()}
-                                    </div>
+                                <div class="game-card-price">
+                                    $${c.price.toLocaleString()}
+                                </div>
 
-                                    <div class="game-card-details">
-                                        ⚡ +${c.electrons}e<br>
-                                        😊 +${c.happiness}
-                                    </div>
+                                <div class="game-card-details">
+                                    ⚡ +${c.electrons}e
+                                    <br>
+                                    😊 +${c.happiness}
+                                </div>
 
-                                    <div class="card-count">
-                                        ${c.quantity} remaining
-                                    </div>
+                                <div class="card-count">
+                                    ${c.quantity} remaining
+                                </div>
 
-                                </button>
+                            </button>
 
-                            `
-                            ).join("")
-                        }
+                        `
+                        ).join("")
+                    }
 
                     </div>
 
@@ -6629,7 +7542,7 @@ function updateUserInterface() {
             !p.finishedThisRound
         ) {
 
-            gameplayPanel = `
+            gameplay = `
 
                 <div class="card-selection">
 
@@ -6654,47 +7567,51 @@ function updateUserInterface() {
 
                     <div class="card-options">
 
-                        ${
-                            goodsCards.map(
-                                (c,i)=>`
+                    ${
+                        goodsCards.map(
+                            (
+                                c,
+                                i
+                            )=>`
 
-                                <button
-                                    class="game-card goods"
+                            <button
+                                class="game-card goods"
 
-                                    ${
-                                        c.quantity<=0 ||
-                                        p.cash<c.price ||
-                                        state.upgradeRequired
-                                            ? "disabled"
-                                            : ""
-                                    }
+                                ${
+                                    c.quantity <= 0 ||
+                                    p.cash < c.price ||
+                                    state.upgradeRequired
+                                        ? "disabled"
+                                        : ""
+                                }
 
-                                    onclick="
-                                        buyCard(
-                                            ${idx},
-                                            'yellow',
-                                            ${i}
-                                        )
-                                    ">
+                                onclick="
+                                    buyCard(
+                                        ${idx},
+                                        'yellow',
+                                        ${i}
+                                    )
+                                ">
 
-                                    <div class="game-card-price">
-                                        $${c.price.toLocaleString()}
-                                    </div>
+                                <div class="game-card-price">
+                                    $${c.price.toLocaleString()}
+                                </div>
 
-                                    <div class="game-card-details">
-                                        ⚡ ${c.electrons}e<br>
-                                        😊 +${c.happiness}
-                                    </div>
+                                <div class="game-card-details">
+                                    ⚡ ${c.electrons}e
+                                    <br>
+                                    😊 +${c.happiness}
+                                </div>
 
-                                    <div class="card-count">
-                                        ${c.quantity} remaining
-                                    </div>
+                                <div class="card-count">
+                                    ${c.quantity} remaining
+                                </div>
 
-                                </button>
+                            </button>
 
-                            `
-                            ).join("")
-                        }
+                        `
+                        ).join("")
+                    }
 
                     </div>
 
@@ -6706,47 +7623,51 @@ function updateUserInterface() {
 
                     <div class="card-options">
 
-                        ${
-                            solarPanelCards.map(
-                                (c,i)=>`
+                    ${
+                        solarPanelCards.map(
+                            (
+                                c,
+                                i
+                            )=>`
 
-                                <button
-                                    class="game-card solar"
+                            <button
+                                class="game-card solar"
 
-                                    ${
-                                        c.quantity<=0 ||
-                                        p.cash<c.price ||
-                                        state.upgradeRequired
-                                            ? "disabled"
-                                            : ""
-                                    }
+                                ${
+                                    c.quantity <= 0 ||
+                                    p.cash < c.price ||
+                                    state.upgradeRequired
+                                        ? "disabled"
+                                        : ""
+                                }
 
-                                    onclick="
-                                        buyCard(
-                                            ${idx},
-                                            'blue',
-                                            ${i}
-                                        )
-                                    ">
+                                onclick="
+                                    buyCard(
+                                        ${idx},
+                                        'blue',
+                                        ${i}
+                                    )
+                                ">
 
-                                    <div class="game-card-price">
-                                        $${c.price.toLocaleString()}
-                                    </div>
+                                <div class="game-card-price">
+                                    $${c.price.toLocaleString()}
+                                </div>
 
-                                    <div class="game-card-details">
-                                        ⚡ +${c.electrons}e<br>
-                                        😊 +${c.happiness}
-                                    </div>
+                                <div class="game-card-details">
+                                    ⚡ +${c.electrons}e
+                                    <br>
+                                    😊 +${c.happiness}
+                                </div>
 
-                                    <div class="card-count">
-                                        ${c.quantity} remaining
-                                    </div>
+                                <div class="card-count">
+                                    ${c.quantity} remaining
+                                </div>
 
-                                </button>
+                            </button>
 
-                            `
-                            ).join("")
-                        }
+                        `
+                        ).join("")
+                    }
 
                     </div>
 
@@ -6758,7 +7679,7 @@ function updateUserInterface() {
 
         else {
 
-            gameplayPanel = `
+            gameplay = `
 
                 <div style="
                     color:var(--text-muted);
@@ -6778,7 +7699,7 @@ function updateUserInterface() {
         }
 
 
-        const flexibleBillingSummary =
+        const billingSummary =
             state.flexibleBillingEnabled &&
             !p.disconnected
                 ? `
@@ -6791,7 +7712,7 @@ function updateUserInterface() {
 
                     <strong style="
                         color:${
-                            state.electricityRate === 30
+                            state.highDemandActive
                                 ? "var(--warning)"
                                 : "var(--success)"
                         };">
@@ -6806,7 +7727,7 @@ function updateUserInterface() {
                 : "";
 
 
-        card.innerHTML = `
+        playerCard.innerHTML = `
 
             <div class="player-header">
 
@@ -6814,7 +7735,7 @@ function updateUserInterface() {
                     🏠 ${p.name}
                 </span>
 
-                ${turnBadge}
+                ${badge}
 
             </div>
 
@@ -6835,17 +7756,14 @@ function updateUserInterface() {
                         Pay Day
                     </span>
 
-                    <strong style="
-                        color:var(--success);">
-
+                    <strong style="color:var(--success);">
                         +$${p.lastPayDay.toLocaleString()}
-
                     </strong>
 
                 </div>
 
 
-                ${flexibleBillingSummary}
+                ${billingSummary}
 
 
                 <div class="payment-row">
@@ -6854,11 +7772,8 @@ function updateUserInterface() {
                         Utility Bill
                     </span>
 
-                    <strong style="
-                        color:var(--danger);">
-
+                    <strong style="color:var(--danger);">
                         -$${p.lastUtilityBill.toLocaleString()}
-
                     </strong>
 
                 </div>
@@ -6870,11 +7785,8 @@ function updateUserInterface() {
                         Grid Fee
                     </span>
 
-                    <strong style="
-                        color:var(--danger);">
-
+                    <strong style="color:var(--danger);">
                         -$${p.lastGridFee.toLocaleString()}
-
                     </strong>
 
                 </div>
@@ -6882,7 +7794,7 @@ function updateUserInterface() {
             </div>
 
 
-            ${gameplayPanel}
+            ${gameplay}
 
 
             <button
@@ -6910,17 +7822,29 @@ function updateUserInterface() {
 
                         <tr>
 
-                            <th>Wallet Cash</th>
+                            <th>
+                                Wallet Cash
+                            </th>
 
-                            <th>e From Goods (-)</th>
+                            <th>
+                                e From Goods (-)
+                            </th>
 
-                            <th>e From Solar (+)</th>
+                            <th>
+                                e From Solar (+)
+                            </th>
 
-                            <th>Total Net e Balance</th>
+                            <th>
+                                Total Net e Balance
+                            </th>
 
-                            <th>Happiness Index</th>
+                            <th>
+                                Happiness Index
+                            </th>
 
-                            <th>Accumulated Happiness</th>
+                            <th>
+                                Accumulated Happiness
+                            </th>
 
                         </tr>
 
@@ -6958,8 +7882,7 @@ function updateUserInterface() {
                             </td>
 
 
-                            <td style="
-                                font-weight:bold;">
+                            <td style="font-weight:bold;">
 
                                 ${p.netE} e
 
@@ -6994,14 +7917,18 @@ function updateUserInterface() {
         `;
 
 
-        container.appendChild(card);
+        container.appendChild(
+            playerCard
+        );
 
     });
 
 
-    if(state.solarPanelSpecialTurn) {
+    if(
+        state.solarPanelSpecialTurn
+    ) {
 
-        const currentSolarPlayer =
+        const p =
             players[
                 state.activePlayerIdx
             ];
@@ -7010,13 +7937,15 @@ function updateUserInterface() {
         document.getElementById(
             "turnTrackingText"
         ).innerText =
-            currentSolarPlayer
-                ? `☀️ Solar Panel-only turn: ${currentSolarPlayer.name}`
+            p
+                ? `☀️ Solar Panel-only turn: ${p.name}`
                 : "☀️ Solar Panel-only turn active.";
 
     }
 
-    else if(allPlayersFinished()) {
+    else if(
+        allPlayersFinished()
+    ) {
 
         document.getElementById(
             "turnTrackingText"
@@ -7027,7 +7956,9 @@ function updateUserInterface() {
 
     else if(
         state.activePlayerIdx !== -1 &&
-        players[state.activePlayerIdx]
+        players[
+            state.activePlayerIdx
+        ]
     ) {
 
         document.getElementById(
@@ -7057,20 +7988,9 @@ function updateUserInterface() {
    END GAME
    ============================================================ */
 
-function forceEndGame(condition) {
-
-    state.solarPanelSpecialTurn = false;
-
-    state.solarPanelEligiblePlayers = [];
-
-    state.solarPanelCompletedPlayers = [];
-
-    state.solarPanelTurnIndex = 0;
-
-    state.normalTurnReturnIndex = -1;
-
-    state.solarPanelPurchasedDuringOpportunity = false;
-
+function forceEndGame(
+    condition
+) {
 
     document.getElementById(
         "managerView"
@@ -7102,28 +8022,29 @@ function forceEndGame(condition) {
         );
 
 
-    let groupAccumulatedHappiness = 0;
+    const groupScore =
+        players.reduce(
+            (
+                total,
+                p
+            )=>
+                total +
+                p.accumulatedHappiness,
+            0
+        );
 
 
-    players.forEach(p=>{
-
-        groupAccumulatedHappiness +=
-            p.accumulatedHappiness;
-
-    });
-
-
-    if(condition === "blackout") {
+    if(
+        condition ===
+        "blackout"
+    ) {
 
         heading.innerText =
             "🚨 CRITICAL GRID FAILURE: BLACKOUT OCCURRED";
 
+
         heading.style.color =
             "var(--danger)";
-
-
-        const finalGroupScore =
-            groupAccumulatedHappiness - 50;
 
 
         subText.innerHTML = `
@@ -7135,7 +8056,7 @@ function forceEndGame(condition) {
 
             <strong>
                 Combined Neighborhood Score:
-                ${finalGroupScore}
+                ${groupScore - 50}
                 Accumulated Happiness Points
             </strong>
 
@@ -7143,11 +8064,14 @@ function forceEndGame(condition) {
 
     }
 
-
-    else if(condition === "balanced") {
+    else if(
+        condition ===
+        "balanced"
+    ) {
 
         heading.innerText =
             "⚖️ BALANCED GRID STABILIZATION ACHIEVED";
+
 
         heading.style.color =
             "var(--success)";
@@ -7155,13 +8079,9 @@ function forceEndGame(condition) {
 
         subText.innerHTML = `
 
-            No components acquired for 4 consecutive rounds.
-
-            <br><br>
-
             <strong>
                 Combined Neighborhood Score:
-                ${groupAccumulatedHappiness}
+                ${groupScore}
                 Accumulated Happiness Points
             </strong>
 
@@ -7169,11 +8089,14 @@ function forceEndGame(condition) {
 
     }
 
-
-    else if(condition === "allDisconnected") {
+    else if(
+        condition ===
+        "allDisconnected"
+    ) {
 
         heading.innerText =
             "🔌 ALL CUSTOMER SERVICES DISCONNECTED";
+
 
         heading.style.color =
             "var(--danger)";
@@ -7181,13 +8104,13 @@ function forceEndGame(condition) {
 
         subText.innerHTML = `
 
-            No active customers remain connected to the grid.
+            No active customers remain connected.
 
             <br><br>
 
             <strong>
                 Combined Neighborhood Score:
-                ${groupAccumulatedHappiness}
+                ${groupScore}
                 Accumulated Happiness Points
             </strong>
 
@@ -7195,11 +8118,11 @@ function forceEndGame(condition) {
 
     }
 
-
     else {
 
         heading.innerText =
             "🏁 GAME COMPLETED: TIME LIMIT CONCLUDED";
+
 
         heading.style.color =
             "var(--primary)";
@@ -7207,13 +8130,9 @@ function forceEndGame(condition) {
 
         subText.innerHTML = `
 
-            Operational time constraints reached.
-
-            <br><br>
-
             <strong>
                 Combined Neighborhood Score:
-                ${groupAccumulatedHappiness}
+                ${groupScore}
                 Accumulated Happiness Points
             </strong>
 
@@ -7228,33 +8147,51 @@ function forceEndGame(condition) {
         );
 
 
-    podium.innerHTML = "";
+    podium.innerHTML =
+        "";
 
 
     const ranked =
         [...players].sort(
-            (a,b)=>
+            (
+                a,
+                b
+            )=>
                 b.accumulatedHappiness -
                 a.accumulatedHappiness
         );
 
 
-    ranked.forEach((p,i)=>{
+    ranked.forEach(
+        (
+            p,
+            i
+        )=>{
 
         const row =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
-        row.style.padding = "12px";
+        row.style.padding =
+            "12px";
 
-        row.style.background = "#0f172a";
+
+        row.style.background =
+            "#0f172a";
+
 
         row.style.border =
             "1px solid var(--border)";
 
-        row.style.marginBottom = "8px";
 
-        row.style.borderRadius = "6px";
+        row.style.marginBottom =
+            "8px";
+
+
+        row.style.borderRadius =
+            "6px";
 
 
         row.innerHTML = `
@@ -7281,33 +8218,27 @@ function forceEndGame(condition) {
 
             <br><br>
 
-            Accumulated Happiness Score:
+            Accumulated Happiness:
 
-            <span style="
-                color:#a855f7;
-                font-weight:bold;">
-
+            <strong style="color:#a855f7;">
                 ${p.accumulatedHappiness} pts
-
-            </span>
+            </strong>
 
             <br>
 
-            Current Happiness Index:
+            Current Happiness:
 
-            <span style="
-                color:#a855f7;
-                font-weight:bold;">
-
+            <strong style="color:#a855f7;">
                 ${p.happiness} pts
-
-            </span>
+            </strong>
 
             <br>
 
-            Final Liquidity Wallet:
+            Final Wallet:
 
-            $${p.cash.toLocaleString()}
+            <strong>
+                $${p.cash.toLocaleString()}
+            </strong>
 
             ${
                 p.disconnected
@@ -7315,10 +8246,8 @@ function forceEndGame(condition) {
 
                     <br>
 
-                    Score finalized in Round:
-                    <strong>
-                        ${p.disconnectedRound}
-                    </strong>
+                    Score Finalized:
+                    Round ${p.disconnectedRound}
 
                     `
                     : ""
@@ -7327,7 +8256,9 @@ function forceEndGame(condition) {
         `;
 
 
-        podium.appendChild(row);
+        podium.appendChild(
+            row
+        );
 
     });
 
