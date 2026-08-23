@@ -1,1 +1,7118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Neighborhood Micro-Grid Manager</title>
+
+<style>
+
+/* ============================================================
+   GLOBAL VARIABLES
+   ============================================================ */
+
+:root {
+    --bg-color: #0b0f19;
+    --card-bg: #151f32;
+    --primary: #38bdf8;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: #22314d;
+    --yellow-card: #eab308;
+    --blue-card: #0ea5e9;
+    --danger: #f43f5e;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --purple: #8b5cf6;
+}
+
+
+/* ============================================================
+   BODY
+   ============================================================ */
+
+body {
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+
+    background-color: var(--bg-color);
+
+    color: var(--text-main);
+
+    margin: 0;
+
+    padding: 20px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+}
+
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
+
+.container {
+
+    max-width: 950px;
+
+    width: 100%;
+
+    background: var(--card-bg);
+
+    padding: 30px;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.5);
+
+    box-sizing: border-box;
+}
+
+
+/* ============================================================
+   HEADINGS
+   ============================================================ */
+
+h1 {
+
+    text-align: center;
+
+    margin-top: 0;
+
+    color: var(--primary);
+
+    font-size: 2rem;
+
+    letter-spacing: 0.5px;
+}
+
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+
+.grid-dashboard {
+
+    display: none;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(200px, 1fr));
+
+    gap: 15px;
+
+    background: #0f172a;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    margin-bottom: 25px;
+
+    border: 1px solid var(--border);
+}
+
+
+.dash-card {
+
+    text-align: center;
+}
+
+
+.dash-lbl {
+
+    font-size: 0.8rem;
+
+    color: var(--text-muted);
+
+    text-transform: uppercase;
+
+    font-weight: 600;
+}
+
+
+.dash-val {
+
+    font-size: 26px;
+
+    font-weight: 800;
+
+    margin-top: 5px;
+}
+
+
+/* ============================================================
+   BROWNOUT TRACKERS
+   ============================================================ */
+
+.brownout-trackers {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    margin-top: 5px;
+
+    flex-wrap: wrap;
+}
+
+
+.bo-box {
+
+    width: 24px;
+
+    height: 24px;
+
+    border: 2px solid #475569;
+
+    border-radius: 4px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-weight: bold;
+
+    font-size: 14px;
+}
+
+
+.bo-box.active {
+
+    background: var(--danger);
+
+    border-color: var(--danger);
+
+    color: white;
+}
+
+
+.bo-box.blackout {
+
+    background: #7f1d1d;
+
+    border-color: var(--danger);
+
+    color: white;
+}
+
+
+/* ============================================================
+   SETUP
+   ============================================================ */
+
+.setup-box {
+
+    background: #1e293b;
+
+    padding: 20px;
+
+    border-radius: 10px;
+
+    border: 1px solid var(--border);
+
+    margin-bottom: 25px;
+}
+
+
+.setup-section {
+
+    background: #0f172a;
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    border: 1px solid var(--border);
+
+    margin-top: 15px;
+}
+
+
+.setup-section h4 {
+
+    margin-top: 0;
+
+    color: var(--primary);
+}
+
+
+.flex-row {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+
+.setup-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 12px;
+
+    margin-top: 15px;
+}
+
+
+.setup-field {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+.setup-field label {
+
+    font-size: 0.8rem;
+
+    color: var(--text-muted);
+
+    font-weight: bold;
+}
+
+
+input,
+select {
+
+    background: #0f172a;
+
+    color: white;
+
+    border: 1px solid var(--border);
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    box-sizing: border-box;
+
+    width: 100%;
+}
+
+
+input[type="text"] {
+
+    flex: 1;
+}
+
+
+button {
+
+    background-color: var(--primary);
+
+    color: #0b0f19;
+
+    border: none;
+
+    padding: 12px 20px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    transition:
+        background 0.2s,
+        transform 0.1s;
+}
+
+
+button:hover {
+
+    opacity: 0.9;
+
+}
+
+
+button:active {
+
+    transform: translateY(1px);
+}
+
+
+button:disabled {
+
+    cursor: not-allowed;
+
+    opacity: 0.4;
+}
+
+
+button.action-btn {
+
+    background-color: #334155;
+
+    color: white;
+
+    border: 1px solid var(--border);
+}
+
+
+button.action-btn:hover {
+
+    background-color: #475569;
+}
+
+
+.mode-buttons {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+
+.mode-button {
+
+    flex: 1;
+
+    background: #334155;
+
+    color: white;
+
+    border: 2px solid var(--border);
+}
+
+
+.mode-button.selected {
+
+    background: var(--primary);
+
+    color: #0b0f19;
+
+    border-color: var(--primary);
+}
+
+
+.random-info {
+
+    background: #172554;
+
+    border: 1px solid #1d4ed8;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    margin-top: 15px;
+
+    color: #bfdbfe;
+
+    font-size: 0.9rem;
+}
+
+
+.brownout-inputs {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(120px, 1fr));
+
+    gap: 10px;
+
+    margin-top: 12px;
+}
+
+
+.brownout-input {
+
+    background: #1e293b;
+
+    padding: 10px;
+
+    border-radius: 8px;
+
+    border: 1px solid var(--border);
+}
+
+
+.brownout-input label {
+
+    display: block;
+
+    font-size: 0.75rem;
+
+    color: var(--text-muted);
+
+    margin-bottom: 5px;
+}
+
+
+/* ============================================================
+   ROUND BAR
+   ============================================================ */
+
+.round-bar {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    background: #0f172a;
+
+    padding: 15px 20px;
+
+    border-radius: 10px;
+
+    margin-bottom: 20px;
+
+    border-left: 5px solid var(--primary);
+
+    gap: 15px;
+}
+
+
+/* ============================================================
+   PLAYERS
+   ============================================================ */
+
+.player-list {
+
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+
+    margin-bottom: 25px;
+}
+
+
+.player-card {
+
+    background: #1e293b;
+
+    border: 2px solid var(--border);
+
+    border-radius: 12px;
+
+    padding: 20px;
+}
+
+
+.player-card.active-turn {
+
+    border-color: var(--primary);
+
+    box-shadow:
+        0 0 15px rgba(56,189,248,0.15);
+}
+
+
+.player-card.finished-round {
+
+    opacity: 0.65;
+
+    border-color: #475569;
+}
+
+
+.player-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 15px;
+}
+
+
+.player-title {
+
+    font-size: 1.25rem;
+
+    font-weight: bold;
+}
+
+
+.turn-badge {
+
+    font-size: 0.75rem;
+
+    padding: 4px 10px;
+
+    border-radius: 20px;
+
+    background: #334155;
+
+    color: var(--text-muted);
+}
+
+
+.turn-badge.active {
+
+    background: var(--primary);
+
+    color: #0b0f19;
+
+    font-weight: bold;
+}
+
+
+.turn-badge.finished {
+
+    background: var(--success);
+
+    color: #0b0f19;
+
+    font-weight: bold;
+}
+
+
+/* ============================================================
+   PLAYER DETAILS
+   ============================================================ */
+
+.player-details-toggle {
+
+    width: 100%;
+
+    margin-bottom: 12px;
+
+    background: #334155;
+
+    color: white;
+
+    border: 1px solid var(--border);
+}
+
+
+.player-details-toggle:hover {
+
+    background: #475569;
+}
+
+
+.player-details-hidden {
+
+    display: none;
+}
+
+
+/* ============================================================
+   HOUSE
+   ============================================================ */
+
+.house-section {
+
+    background: #0f172a;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    padding: 15px;
+
+    margin-bottom: 15px;
+}
+
+
+.house-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 12px;
+}
+
+
+.house-title {
+
+    font-weight: 800;
+
+    font-size: 0.95rem;
+}
+
+
+.house-capacity {
+
+    font-size: 0.75rem;
+
+    color: var(--text-muted);
+
+    white-space: nowrap;
+}
+
+
+.house-category {
+
+    margin-top: 12px;
+}
+
+
+.house-category:first-child {
+
+    margin-top: 0;
+}
+
+
+.house-category-title {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    font-size: 0.75rem;
+
+    text-transform: uppercase;
+
+    color: var(--text-muted);
+
+    font-weight: 700;
+
+    margin-bottom: 7px;
+}
+
+
+.house-slots {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 7px;
+}
+
+
+.house-slots.solar-slots {
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+}
+
+
+.house-slot {
+
+    min-height: 72px;
+
+    background: #172033;
+
+    border: 1px dashed #475569;
+
+    border-radius: 7px;
+
+    padding: 8px;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+}
+
+
+.house-slot.occupied-goods {
+
+    border-style: solid;
+
+    border-color: rgba(234,179,8,0.65);
+
+    background: rgba(234,179,8,0.08);
+}
+
+
+.house-slot.occupied-solar {
+
+    border-style: solid;
+
+    border-color: rgba(14,165,233,0.65);
+
+    background: rgba(14,165,233,0.08);
+}
+
+
+.house-slot-id {
+
+    font-weight: 800;
+
+    font-size: 0.9rem;
+}
+
+
+.house-slot-details {
+
+    font-size: 0.68rem;
+
+    color: var(--text-muted);
+
+    margin-top: 3px;
+
+    line-height: 1.3;
+}
+
+
+.house-empty {
+
+    color: #64748b;
+
+    font-size: 0.7rem;
+}
+
+
+/* ============================================================
+   SCORECARD
+   ============================================================ */
+
+.scorecard-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    margin-bottom: 15px;
+
+    background: #0f172a;
+
+    border-radius: 8px;
+
+    overflow: hidden;
+}
+
+
+.scorecard-table th,
+.scorecard-table td {
+
+    padding: 10px 12px;
+
+    text-align: center;
+
+    font-size: 0.9rem;
+
+    border: 1px solid var(--border);
+}
+
+
+.scorecard-table th {
+
+    background: #1e293b;
+
+    color: var(--text-muted);
+
+    font-size: 0.75rem;
+
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   PAYMENT SUMMARY
+   ============================================================ */
+
+.payment-summary {
+
+    background: #0f172a;
+
+    border: 1px solid var(--border);
+
+    border-radius: 8px;
+
+    padding: 12px;
+
+    margin-bottom: 15px;
+}
+
+
+.payment-summary-title {
+
+    font-size: 0.8rem;
+
+    color: var(--text-muted);
+
+    text-transform: uppercase;
+
+    font-weight: bold;
+
+    margin-bottom: 8px;
+}
+
+
+.payment-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    padding: 4px 0;
+
+    font-size: 0.9rem;
+}
+
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.card-selection {
+
+    margin-top: 15px;
+
+    background: #0f172a;
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    border: 1px solid var(--border);
+}
+
+
+.card-selection h4 {
+
+    margin-top: 0;
+
+    margin-bottom: 10px;
+}
+
+
+.card-options {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(170px, 1fr));
+
+    gap: 10px;
+}
+
+
+.game-card {
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    border: 2px solid var(--border);
+
+    background: #1e293b;
+
+    color: white;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+
+.game-card:hover:not(:disabled) {
+
+    border-color: var(--primary);
+}
+
+
+.game-card.goods:hover:not(:disabled) {
+
+    border-color: var(--yellow-card);
+}
+
+
+.game-card.solar:hover:not(:disabled) {
+
+    border-color: var(--blue-card);
+}
+
+
+.game-card:disabled {
+
+    opacity: 0.4;
+
+    cursor: not-allowed;
+}
+
+
+.game-card-price {
+
+    font-size: 1.1rem;
+
+    font-weight: bold;
+
+    margin-bottom: 6px;
+}
+
+
+.game-card-details {
+
+    font-size: 0.8rem;
+
+    color: var(--text-muted);
+
+    line-height: 1.5;
+}
+
+
+.card-count {
+
+    margin-top: 5px;
+
+    font-size: 0.75rem;
+
+    color: var(--text-muted);
+}
+
+
+.no-purchase-button {
+
+    width: 100%;
+
+    margin-bottom: 15px;
+
+    background: #475569;
+
+    color: white;
+
+    border: 2px solid #64748b;
+}
+
+
+.no-purchase-button:hover {
+
+    background: #64748b;
+}
+
+
+/* ============================================================
+   LOG
+   ============================================================ */
+
+.log-box {
+
+    background: #0f172a;
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    max-height: 160px;
+
+    overflow-y: auto;
+
+    font-family: monospace;
+
+    font-size: 0.85rem;
+
+    color: var(--text-muted);
+
+    border: 1px solid var(--border);
+}
+
+
+.log-item {
+
+    margin-bottom: 6px;
+
+    border-bottom: 1px solid #151f32;
+
+    padding-bottom: 4px;
+}
+
+
+/* ============================================================
+   END GAME
+   ============================================================ */
+
+.game-ended {
+
+    text-align: center;
+
+    padding: 40px;
+
+    background: #0f172a;
+
+    border-radius: 16px;
+
+    border: 2px dashed var(--danger);
+}
+
+
+/* ============================================================
+   CUSTOM GAME MODAL
+   ============================================================ */
+
+.modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(2,6,23,0.82);
+
+    backdrop-filter: blur(5px);
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    z-index: 9999;
+
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    overflow-y: auto;
+}
+
+
+.modal-overlay.visible {
+
+    display: flex;
+
+    animation: modalFadeIn 0.18s ease-out;
+}
+
+
+.game-modal {
+
+    width: min(560px, 100%);
+
+    max-height: calc(100vh - 40px);
+
+    background:
+        linear-gradient(
+            145deg,
+            #18253a,
+            #0f172a
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,0.65),
+        0 0 30px rgba(56,189,248,0.08);
+
+    overflow: hidden;
+
+    animation: modalSlideIn 0.2s ease-out;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+.modal-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 18px 22px;
+
+    border-bottom: 1px solid var(--border);
+
+    background: rgba(15,23,42,0.7);
+
+    flex-shrink: 0;
+}
+
+
+.modal-icon {
+
+    font-size: 1.7rem;
+
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #1e293b;
+}
+
+
+.modal-title {
+
+    font-size: 1.15rem;
+
+    font-weight: 800;
+
+    color: var(--text-main);
+}
+
+
+.modal-body {
+
+    padding: 24px 22px;
+
+    color: #dbeafe;
+
+    line-height: 1.6;
+
+    font-size: 0.95rem;
+
+    overflow-y: auto;
+
+    min-height: 0;
+}
+
+
+.modal-body strong {
+
+    color: white;
+}
+
+
+.modal-footer {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 15px 22px 20px;
+
+    border-top: 1px solid var(--border);
+
+    background: rgba(15,23,42,0.45);
+
+    flex-wrap: wrap;
+
+    flex-shrink: 0;
+}
+
+
+.modal-button {
+
+    min-width: 110px;
+}
+
+
+.modal-button.secondary {
+
+    background: #334155;
+
+    color: white;
+
+    border: 1px solid var(--border);
+}
+
+
+.modal-button.primary {
+
+    background: var(--primary);
+
+    color: #0b0f19;
+}
+
+
+.modal-button.success {
+
+    background: var(--success);
+
+    color: #062e25;
+}
+
+
+.modal-button.danger {
+
+    background: var(--danger);
+
+    color: white;
+}
+
+
+.modal-button.warning {
+
+    background: var(--warning);
+
+    color: #0b0f19;
+}
+
+
+.modal-button.purple {
+
+    background: var(--purple);
+
+    color: white;
+}
+
+
+.modal-button.goods {
+
+    background: #a16207;
+
+    color: white;
+
+    border: 1px solid #eab308;
+}
+
+
+.modal-button.solar {
+
+    background: #0369a1;
+
+    color: white;
+
+    border: 1px solid #0ea5e9;
+}
+
+
+.modal-input {
+
+    margin-top: 15px;
+
+    background: #0b1220;
+
+    border: 1px solid var(--border);
+
+    color: white;
+
+    width: 100%;
+
+    box-sizing: border-box;
+}
+
+
+.modal-event {
+
+    border-left: 4px solid var(--primary);
+
+    background: #0b1220;
+
+    padding: 14px;
+
+    border-radius: 8px;
+
+    margin-top: 12px;
+}
+
+
+.modal-event.warning {
+
+    border-left-color: var(--warning);
+}
+
+
+.modal-event.danger {
+
+    border-left-color: var(--danger);
+}
+
+
+.modal-event.success {
+
+    border-left-color: var(--success);
+}
+
+
+.modal-financial-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+
+.modal-financial-item {
+
+    background: #0b1220;
+
+    border: 1px solid var(--border);
+
+    padding: 12px;
+
+    border-radius: 8px;
+}
+
+
+.modal-financial-label {
+
+    font-size: 0.72rem;
+
+    text-transform: uppercase;
+
+    color: var(--text-muted);
+
+    font-weight: bold;
+}
+
+
+.modal-financial-value {
+
+    font-size: 1.15rem;
+
+    font-weight: 800;
+
+    margin-top: 3px;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width:700px) {
+
+    .container {
+        padding: 15px;
+    }
+
+    .round-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .flex-row {
+        flex-direction: column;
+    }
+
+    .mode-buttons {
+        flex-direction: column;
+    }
+
+    .scorecard-table {
+        font-size: 0.75rem;
+    }
+
+    .scorecard-table th,
+    .scorecard-table td {
+        padding: 6px;
+    }
+
+    .modal-financial-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .house-slots {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="container">
+
+<h1>⚡ Neighborhood Micro-Grid Manager ⚡</h1>
+
+
+<!-- ============================================================
+     DASHBOARD
+     ============================================================ -->
+
+<div
+id="gridDashboard"
+class="grid-dashboard">
+
+<div class="dash-card">
+
+<div class="dash-lbl">
+Current Round
+</div>
+
+<div
+id="dispRound"
+class="dash-val"
+style="color:var(--primary);">
+
+1
+
+</div>
+
+</div>
+
+
+<div
+id="demandDashboardCard"
+class="dash-card">
+
+<div class="dash-lbl">
+Total Demand vs Capacity
+</div>
+
+<div
+id="dispDemand"
+class="dash-val">
+
+0 / 50 e
+
+</div>
+
+</div>
+
+
+<div class="dash-card">
+
+<div class="dash-lbl">
+Active System Fees
+</div>
+
+<div
+id="dispFees"
+class="dash-val">
+
+$0 / rd
+
+</div>
+
+</div>
+
+
+<div
+id="brownoutDashboardCard"
+class="dash-card">
+
+<div class="dash-lbl">
+Brownouts Limit
+</div>
+
+<div
+id="brownoutDisplay"
+class="brownout-trackers">
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ============================================================
+     SETUP
+     ============================================================ -->
+
+<div
+id="setupView"
+class="setup-box">
+
+<h3>
+Neighborhood Initialization Portal
+</h3>
+
+
+<p style="
+color:var(--text-muted);
+margin-top:-10px;
+font-size:0.9rem;">
+
+Register the neighbors currently sitting at your table.
+Then choose whether to establish the grid parameters
+manually or randomize them.
+
+</p>
+
+
+<div class="flex-row">
+
+<input
+type="text"
+id="pNameInput"
+placeholder="Neighbor Name...">
+
+<button onclick="registerNeighbor()">
+Add Neighbor
+</button>
+
+</div>
+
+
+<div
+id="interimList"
+style="
+margin-top:15px;
+font-size:0.9rem;
+color:var(--text-muted);">
+</div>
+
+
+<div class="setup-section">
+
+<h4>
+⚙️ Grid Parameter Setup
+</h4>
+
+
+<p style="
+color:var(--text-muted);
+font-size:0.9rem;">
+
+Players may establish the grid parameters themselves
+or allow the system to randomly generate them.
+
+</p>
+
+
+<div class="mode-buttons">
+
+<button
+id="manualModeButton"
+class="mode-button selected"
+onclick="setSetupMode('manual')">
+
+✏️ Set Parameters Manually
+
+</button>
+
+
+<button
+id="randomModeButton"
+class="mode-button"
+onclick="setSetupMode('random')">
+
+🎲 Randomize Parameters
+
+</button>
+
+</div>
+
+
+<div id="manualSetup">
+
+<div class="setup-grid">
+
+<div class="setup-field">
+
+<label>
+Initial Grid Capacity (30–50 electrons)
+</label>
+
+<input
+type="number"
+id="initialCapacityInput"
+min="30"
+max="50"
+value="50">
+
+</div>
+
+
+<div class="setup-field">
+
+<label>
+Brownouts Before Blackout (1–6)
+</label>
+
+<input
+type="number"
+id="brownoutLimitInput"
+min="1"
+max="6"
+value="4"
+onchange="generateBrownoutCapacityInputs()">
+
+</div>
+
+</div>
+
+
+<div style="
+margin-top:20px;
+font-weight:bold;">
+
+Capacity Added After Each Brownout
+
+</div>
+
+
+<p style="
+color:var(--text-muted);
+font-size:0.8rem;">
+
+Set the number of additional electrons added after
+each brownout. Each value must be between 5 and 15.
+
+</p>
+
+
+<div
+id="brownoutCapacityInputs"
+class="brownout-inputs">
+</div>
+
+</div>
+
+
+<div
+id="randomSetup"
+style="display:none;">
+
+<div class="random-info">
+
+🎲 <strong>Randomized Grid Parameters</strong>
+
+<br><br>
+
+The system will randomly determine:
+
+<ul>
+
+<li>
+Initial capacity: <strong>30–50 electrons</strong>
+</li>
+
+<li>
+Number of brownouts before blackout:
+<strong>1–6</strong>
+</li>
+
+<li>
+Capacity added after each brownout:
+<strong>5–15 electrons</strong>
+</li>
+
+</ul>
+
+<strong>Note:</strong>
+
+Grid capacity and the brownout limit will remain
+hidden from players during gameplay.
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ============================================================
+     GAME POLICIES
+     ============================================================ -->
+
+<div class="setup-section">
+
+<h4>
+📜 Game Policies
+</h4>
+
+<p style="
+color:var(--text-muted);
+font-size:0.9rem;">
+
+Choose the policy that will govern neighborhood
+electricity use during gameplay.
+
+</p>
+
+<div class="setup-field">
+
+<label>
+Game Policy
+</label>
+
+<select id="gamePolicyInput">
+
+<option value="none">
+No Policies
+</option>
+
+<option
+value="systemFines"
+selected>
+System Fines for Exceeding Capacity
+</option>
+
+<option value="flexibleBilling">
+Flexible Billing Rates
+</option>
+
+</select>
+
+</div>
+
+</div>
+
+
+<div class="flex-row" style="margin-top:20px;">
+
+<button
+onclick="commenceGridSimulation()"
+style="
+width:100%;
+background:var(--primary);
+color:#0b0f19;">
+
+Start Grid Manager Operations →
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- ============================================================
+     GAMEPLAY
+     ============================================================ -->
+
+<div
+id="managerView"
+style="display:none;">
+
+<div class="round-bar">
+
+<div>
+
+<span style="
+font-weight:bold;
+color:var(--primary);">
+
+System Status:
+
+</span>
+
+
+<span id="turnTrackingText">
+Loading data...
+</span>
+
+</div>
+
+
+<div style="
+display:flex;
+gap:8px;">
+
+<button
+id="upgradeGridBtn"
+style="
+background:#8b5cf6;
+color:white;
+display:none;"
+onclick="applyGridUpgrade()">
+
+Add Capacity
+
+</button>
+
+</div>
+
+</div>
+
+
+<div
+id="playerContainer"
+class="player-list">
+</div>
+
+
+<h3>
+Grid Activity & Transaction Log
+</h3>
+
+
+<div
+id="actionHistoryLog"
+class="log-box">
+
+<div class="log-item">
+
+[SYSTEM] System active.
+Grid parameters established.
+
+</div>
+
+</div>
+
+
+<div
+class="flex-row"
+style="margin-top:20px;">
+
+<button
+class="action-btn"
+onclick="forceEndGame('Manual Trigger')"
+style="
+width:100%;
+font-size:0.85rem;
+color:var(--text-muted);">
+
+Force Manual End Game
+(Time Expired / Balanced Grid)
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- ============================================================
+     END GAME
+     ============================================================ -->
+
+<div
+id="endView"
+class="game-ended"
+style="display:none;">
+
+<h2
+id="endReasonTitle"
+style="
+color:var(--danger);
+margin-top:0;">
+
+BLACKOUT INDUCED GAME OVER
+
+</h2>
+
+
+<p
+id="neighborhoodSharedScore"
+style="
+font-size:1.15rem;
+font-weight:bold;
+margin-bottom:25px;">
+</p>
+
+
+<h3>
+Final Neighborhood Rankings
+</h3>
+
+
+<div
+id="finalScoreboardPodium"
+style="
+max-width:600px;
+margin:0 auto;
+text-align:left;">
+</div>
+
+
+<button
+onclick="window.location.reload()"
+style="margin-top:30px;">
+
+Initialize New Grid Instance
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- ============================================================
+     CUSTOM GAME MODAL
+     ============================================================ -->
+
+<div
+id="gameModalOverlay"
+class="modal-overlay"
+onclick="handleModalBackdrop(event)">
+
+<div
+id="gameModal"
+class="game-modal"
+role="dialog"
+aria-modal="true">
+
+<div class="modal-header">
+
+<div
+id="modalIcon"
+class="modal-icon">
+
+⚡
+
+</div>
+
+<div
+id="modalTitle"
+class="modal-title">
+
+System Message
+
+</div>
+
+</div>
+
+
+<div
+id="modalBody"
+class="modal-body">
+
+</div>
+
+
+<div
+id="modalFooter"
+class="modal-footer">
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   CARD DECKS
+   ============================================================ */
+
+const goodsCards = [
+
+    {id:"G01",price:160,electrons:-1,happiness:1,quantity:3},
+    {id:"G02",price:240,electrons:-2,happiness:2,quantity:3},
+    {id:"G03",price:320,electrons:-3,happiness:3,quantity:3},
+    {id:"G04",price:400,electrons:-4,happiness:4,quantity:3},
+    {id:"G05",price:480,electrons:-5,happiness:5,quantity:3},
+    {id:"G06",price:560,electrons:-6,happiness:6,quantity:3},
+    {id:"G07",price:640,electrons:-7,happiness:7,quantity:3},
+    {id:"G08",price:720,electrons:-8,happiness:8,quantity:3},
+    {id:"G09",price:800,electrons:-9,happiness:9,quantity:3},
+
+    {id:"G10",price:160,electrons:-2,happiness:1,quantity:2},
+    {id:"G11",price:240,electrons:-3,happiness:2,quantity:2},
+    {id:"G12",price:320,electrons:-4,happiness:3,quantity:2},
+    {id:"G13",price:400,electrons:-5,happiness:4,quantity:2},
+    {id:"G14",price:480,electrons:-6,happiness:5,quantity:2},
+    {id:"G15",price:560,electrons:-7,happiness:6,quantity:2},
+    {id:"G16",price:640,electrons:-8,happiness:7,quantity:2},
+    {id:"G17",price:720,electrons:-9,happiness:8,quantity:2},
+    {id:"G18",price:800,electrons:-10,happiness:9,quantity:2}
+
+];
+
+
+const solarPanelCards = [
+
+    {id:"SP01",price:2000,electrons:10,happiness:2,quantity:4},
+    {id:"SP02",price:2500,electrons:15,happiness:2,quantity:2},
+    {id:"SP03",price:2800,electrons:20,happiness:2,quantity:2}
+
+];
+
+
+goodsCards.sort((a,b)=>a.price-b.price);
+solarPanelCards.sort((a,b)=>a.price-b.price);
+
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+
+let state = {
+
+    capacity:50,
+
+    brownouts:0,
+
+    brownoutLimit:4,
+
+    capacityAdditions:[10,10,10,10],
+
+    round:1,
+
+    stagnantCount:0,
+
+    anyPurchases:false,
+
+    feePerRound:0,
+
+    startingPlayerIdx:0,
+
+    activePlayerIdx:0,
+
+    randomized:false,
+
+    upgradeRequired:false,
+
+    gamePolicy:"systemFines",
+
+    electricityRate:20,
+
+    highDemandActive:false,
+
+    landfill:[],
+
+    solarPanelSpecialTurn:false,
+
+    solarPanelEligiblePlayers:[],
+
+    solarPanelTurnIndex:0,
+
+    normalTurnReturnIndex:-1,
+
+    solarPanelPurchasedDuringOpportunity:false,
+
+    solarPanelCompletedPlayers:[]
+
+};
+
+
+let players = [];
+
+
+/* ============================================================
+   CUSTOM MODAL SYSTEM
+   ============================================================ */
+
+let modalResolver = null;
+
+
+function openGameModal({
+
+    title = "System Message",
+
+    icon = "⚡",
+
+    body = "",
+
+    buttons = [
+        {
+            text:"OK",
+            className:"primary",
+            value:true
+        }
+    ],
+
+    input = null
+
+} = {}) {
+
+    const overlay =
+        document.getElementById("gameModalOverlay");
+
+    const modalIcon =
+        document.getElementById("modalIcon");
+
+    const modalTitle =
+        document.getElementById("modalTitle");
+
+    const modalBody =
+        document.getElementById("modalBody");
+
+    const modalFooter =
+        document.getElementById("modalFooter");
+
+
+    modalIcon.innerText = icon;
+
+    modalTitle.innerText = title;
+
+    modalBody.innerHTML = body;
+
+
+    if(input) {
+
+        const inputElement =
+            document.createElement("input");
+
+        inputElement.className =
+            "modal-input";
+
+        inputElement.type =
+            input.type || "number";
+
+        inputElement.placeholder =
+            input.placeholder || "";
+
+        inputElement.value =
+            input.value ?? "";
+
+        inputElement.min =
+            input.min ?? "";
+
+        inputElement.max =
+            input.max ?? "";
+
+        inputElement.step =
+            input.step ?? "1";
+
+        inputElement.id =
+            "modalInputField";
+
+        modalBody.appendChild(
+            inputElement
+        );
+
+    }
+
+
+    modalFooter.innerHTML = "";
+
+
+    buttons.forEach(buttonData => {
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            `modal-button ${
+                buttonData.className || "primary"
+            }`;
+
+        button.innerText =
+            buttonData.text;
+
+        button.onclick = () => {
+
+            let value =
+                buttonData.value;
+
+            if(input) {
+
+                const field =
+                    document.getElementById(
+                        "modalInputField"
+                    );
+
+                value = {
+
+                    action:
+                        buttonData.value,
+
+                    input:
+                        field
+                            ? field.value
+                            : ""
+
+                };
+
+            }
+
+            closeGameModal();
+
+            if(modalResolver) {
+
+                const resolver =
+                    modalResolver;
+
+                modalResolver = null;
+
+                resolver(value);
+
+            }
+
+        };
+
+
+        modalFooter.appendChild(
+            button
+        );
+
+    });
+
+
+    overlay.classList.add("visible");
+
+
+    setTimeout(() => {
+
+        if(input) {
+
+            const field =
+                document.getElementById(
+                    "modalInputField"
+                );
+
+            if(field) {
+
+                field.focus();
+
+                field.select();
+
+            }
+
+        }
+
+    },50);
+
+
+    return new Promise(resolve => {
+
+        modalResolver = resolve;
+
+    });
+
+}
+
+
+function closeGameModal() {
+
+    document
+        .getElementById("gameModalOverlay")
+        .classList.remove("visible");
+
+}
+
+
+function handleModalBackdrop(event) {
+
+    if(
+        event.target.id !==
+        "gameModalOverlay"
+    ) {
+
+        return;
+
+    }
+
+}
+
+
+function showMessage(
+    title,
+    body,
+    icon = "⚡",
+    buttonText = "Continue"
+) {
+
+    return openGameModal({
+
+        title,
+
+        icon,
+
+        body,
+
+        buttons:[
+
+            {
+                text:buttonText,
+                className:"primary",
+                value:true
+            }
+
+        ]
+
+    });
+
+}
+
+
+async function showConfirmation(
+    title,
+    body,
+    icon = "⚡",
+    confirmText = "Confirm",
+    confirmClass = "primary"
+) {
+
+    return await openGameModal({
+
+        title,
+
+        icon,
+
+        body,
+
+        buttons:[
+
+            {
+                text:"Cancel",
+                className:"secondary",
+                value:false
+            },
+
+            {
+                text:confirmText,
+                className:confirmClass,
+                value:true
+            }
+
+        ]
+
+    });
+
+}
+
+
+/* ============================================================
+   FLEXIBLE BILLING HELPERS
+   ============================================================ */
+
+function resetFlexibleBillingRate(reason = "") {
+
+    if(
+        state.gamePolicy !==
+        "flexibleBilling"
+    ) {
+
+        return;
+
+    }
+
+
+    const wasHighDemand =
+        state.highDemandActive ||
+        state.electricityRate !== 20;
+
+
+    state.electricityRate = 20;
+
+    state.highDemandActive = false;
+
+
+    if(wasHighDemand) {
+
+        appendLog(
+            `💡 Flexible Billing rate reset to the normal $20/e` +
+            `${reason ? ` ${reason}` : ""}.`
+        );
+
+    }
+
+}
+
+
+function evaluateFlexibleBilling(
+    currentLoad,
+    allowHighDemandTrigger = true
+) {
+
+    if(
+        state.gamePolicy !==
+        "flexibleBilling"
+    ) {
+
+        state.electricityRate = 20;
+
+        state.highDemandActive = false;
+
+        return;
+
+    }
+
+
+    if(!allowHighDemandTrigger) {
+
+        return;
+
+    }
+
+
+    const highDemandThreshold =
+        state.capacity - 10;
+
+
+    if(
+        currentLoad >=
+        highDemandThreshold
+    ) {
+
+        if(!state.highDemandActive) {
+
+            state.highDemandActive = true;
+
+            state.electricityRate = 30;
+
+
+            appendLog(
+                `⚠️ Flexible Billing high-demand pricing activated. ` +
+                `Neighborhood demand reached ${currentLoad}e, ` +
+                `within 10e of the ${state.capacity}e grid capacity. ` +
+                `Utility electricity rate is now $30/e.`
+            );
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   HOUSE / CARD HELPERS
+   ============================================================ */
+
+function getPlayerGoodsCount(player) {
+
+    return player.goodsCards.length;
+
+}
+
+
+function getPlayerSolarCount(player) {
+
+    return player.solarPanels.length;
+
+}
+
+
+function getPlayerHouseCardCount(player) {
+
+    return (
+        getPlayerGoodsCount(player) +
+        getPlayerSolarCount(player)
+    );
+
+}
+
+
+function createHouseCard(card) {
+
+    return {
+
+        id:card.id,
+
+        price:card.price,
+
+        electrons:card.electrons,
+
+        happiness:card.happiness
+
+    };
+
+}
+
+
+function returnCardToBoard(
+    discarded,
+    cardType
+) {
+
+    if(!discarded) {
+
+        return;
+
+    }
+
+
+    const deck =
+        cardType === "goods"
+            ? goodsCards
+            : solarPanelCards;
+
+
+    const boardCard =
+        deck.find(
+            card =>
+                card.id === discarded.id
+        );
+
+
+    if(boardCard) {
+
+        boardCard.quantity += 1;
+
+    }
+
+}
+
+
+function discardHouseCard(
+    p,
+    cardType,
+    cardIndex
+) {
+
+    if(!p) {
+
+        return null;
+
+    }
+
+
+    const collection =
+        cardType === "goods"
+            ? p.goodsCards
+            : p.solarPanels;
+
+
+    if(
+        cardIndex < 0 ||
+        cardIndex >= collection.length
+    ) {
+
+        return null;
+
+    }
+
+
+    const discarded =
+        collection.splice(
+            cardIndex,
+            1
+        )[0];
+
+
+    if(!discarded) {
+
+        return null;
+
+    }
+
+
+    state.landfill.push({
+
+        ...discarded,
+
+        originalOwner:p.name,
+
+        originalOwnerIndex:
+            players.indexOf(p),
+
+        discardedRound:
+            state.round,
+
+        discardedType:
+            cardType
+
+    });
+
+
+    returnCardToBoard(
+        discarded,
+        cardType
+    );
+
+
+    if(cardType === "goods") {
+
+        p.goodsE -=
+            Math.abs(discarded.electrons);
+
+    }
+
+    else {
+
+        p.solarE -=
+            discarded.electrons;
+
+    }
+
+
+    p.netE =
+        p.solarE -
+        p.goodsE;
+
+
+    appendLog(
+
+        `🗑️ ${p.name} sent ${cardType === "goods" ? "Goods" : "Solar Panel"} Card ${discarded.id} to the landfill. ` +
+
+        `The card has been returned to the neighborhood board and is available for purchase again.`
+
+    );
+
+
+    return discarded;
+
+}
+
+
+async function chooseHouseCardToDiscard(
+    p,
+    cardType,
+    newCard
+) {
+
+    const collection =
+        cardType === "goods"
+            ? p.goodsCards
+            : p.solarPanels;
+
+
+    if(collection.length === 0) {
+
+        return -1;
+
+    }
+
+
+    const buttons = [];
+
+
+    collection.forEach((heldCard,index)=>{
+
+        buttons.push({
+
+            text:
+                `Discard ${heldCard.id} — ` +
+                `${cardType === "goods"
+                    ? Math.abs(heldCard.electrons)
+                    : heldCard.electrons
+                }e`,
+
+            className:
+                cardType === "goods"
+                    ? "goods"
+                    : "solar",
+
+            value:index
+
+        });
+
+    });
+
+
+    buttons.push({
+
+        text:"Cancel",
+
+        className:"secondary",
+
+        value:-1
+
+    });
+
+
+    return await openGameModal({
+
+        title:
+            `${p.name}: House Full`,
+
+        icon:
+            cardType === "goods"
+                ? "🛒"
+                : "☀️",
+
+        body:`
+
+            <div class="modal-event warning">
+
+                <strong>
+                    Your house is full.
+                </strong>
+
+                <br><br>
+
+                You already have
+                <strong>
+                    ${collection.length}
+                    ${cardType === "goods"
+                        ? "Goods cards"
+                        : "Solar Panel cards"
+                    }
+                </strong>
+                in your house.
+
+            </div>
+
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);">
+
+                To purchase
+                <strong>${newCard.id}</strong>,
+                you must select one of your current
+                ${cardType === "goods"
+                    ? "Goods cards"
+                    : "Solar Panels"
+                }
+                to send to the landfill.
+
+            </div>
+
+
+            <div style="
+                margin-top:12px;
+                color:var(--success);
+                font-size:0.85rem;">
+
+                🗑️ The discarded card will return to the
+                neighborhood board and can be purchased again
+                by another player.
+
+            </div>
+
+        `,
+
+        buttons
+
+    });
+
+}
+
+
+/* ============================================================
+   FINISH ROUND POP-UP
+   ============================================================ */
+
+async function promptFinishRound(pIdx) {
+
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        p.finishedThisRound
+    ) {
+
+        return;
+
+    }
+
+
+    const finishChoice =
+        await openGameModal({
+
+            title:
+                `${p.name}: Finish for This Round?`,
+
+            icon:"🏁",
+
+            body:`
+
+                <div class="modal-event success">
+
+                    <strong>
+                        Purchase complete.
+                    </strong>
+
+                    <br><br>
+
+                    Would you like to finish your play
+                    for <strong>Round ${state.round}</strong>?
+
+                </div>
+
+
+                <div style="
+                    margin-top:15px;
+                    color:var(--text-muted);
+                    font-size:0.85rem;">
+
+                    If you finish, you will no longer be
+                    able to make purchases during this round.
+
+                    You may also continue the round and
+                    leave your turn unfinished.
+
+                </div>
+
+            `,
+
+            buttons:[
+
+                {
+                    text:"Continue Round",
+                    className:"secondary",
+                    value:false
+                },
+
+                {
+                    text:"Finish for This Round",
+                    className:"success",
+                    value:true
+                }
+
+            ]
+
+        });
+
+
+    if(finishChoice) {
+
+        finishPlayerRound(pIdx);
+
+    }
+
+}
+
+
+/* ============================================================
+   ROUND SETTLEMENT POP-UP
+   ============================================================ */
+
+async function promptRoundSettlement() {
+
+    if(
+        !allPlayersFinished() ||
+        state.upgradeRequired
+    ) {
+
+        return;
+
+    }
+
+
+    const rateNotice =
+        state.gamePolicy === "flexibleBilling"
+            ? `
+
+                <li>
+                    Apply the current electricity billing rate
+                    of <strong>$${state.electricityRate}/electron</strong>
+                    to utility bills.
+                </li>
+
+              `
+            : "";
+
+
+    const settlementChoice =
+        await openGameModal({
+
+            title:
+                "Process Pay Day & Utility Bills",
+
+            icon:"💰",
+
+            body:`
+
+                <div class="modal-event success">
+
+                    <strong>
+                        🏁 All players have finished Round ${state.round}.
+                    </strong>
+
+                    <br><br>
+
+                    The neighborhood is ready to process
+                    Pay Day and Utility Bills.
+
+                </div>
+
+
+                <div style="
+                    margin-top:15px;
+                    color:var(--text-muted);
+                    font-size:0.85rem;">
+
+                    Processing the round will:
+
+                    <ul style="
+                        margin-top:8px;
+                        padding-left:20px;">
+
+                        <li>
+                            Record each player's current Happiness Index
+                            toward their Accumulated Happiness.
+                        </li>
+
+                        <li>
+                            Distribute Pay Day.
+                        </li>
+
+                        <li>
+                            Process utility bills.
+                        </li>
+
+                        ${rateNotice}
+
+                        <li>
+                            Process surplus electricity income.
+                        </li>
+
+                        <li>
+                            Collect neighborhood grid fees.
+                        </li>
+
+                    </ul>
+
+                    Once processed, the neighborhood will
+                    advance to the next round.
+
+                </div>
+
+            `,
+
+            buttons:[
+
+                {
+                    text:"Process Pay Day & Utility Bills",
+                    className:"success",
+                    value:true
+                }
+
+            ]
+
+        });
+
+
+    if(settlementChoice) {
+
+        await executeRoundEndPayments();
+
+    }
+
+}
+
+
+/* ============================================================
+   SETUP MODE
+   ============================================================ */
+
+let setupMode = "manual";
+
+
+function setSetupMode(mode) {
+
+    setupMode = mode;
+
+    const manual =
+        document.getElementById("manualSetup");
+
+    const random =
+        document.getElementById("randomSetup");
+
+    const manualButton =
+        document.getElementById("manualModeButton");
+
+    const randomButton =
+        document.getElementById("randomModeButton");
+
+
+    if(mode === "manual") {
+
+        manual.style.display = "block";
+
+        random.style.display = "none";
+
+        manualButton.classList.add("selected");
+
+        randomButton.classList.remove("selected");
+
+    }
+
+    else {
+
+        manual.style.display = "none";
+
+        random.style.display = "block";
+
+        manualButton.classList.remove("selected");
+
+        randomButton.classList.add("selected");
+
+    }
+
+}
+
+
+/* ============================================================
+   RANDOM INTEGER
+   ============================================================ */
+
+function randomInteger(min,max) {
+
+    return Math.floor(
+        Math.random() *
+        (max-min+1)
+    ) + min;
+
+}
+
+
+/* ============================================================
+   BROWNOUT INPUTS
+   ============================================================ */
+
+function generateBrownoutCapacityInputs() {
+
+    const input =
+        document.getElementById(
+            "brownoutLimitInput"
+        );
+
+    let number =
+        parseInt(input.value);
+
+
+    if(isNaN(number)) {
+
+        number = 4;
+
+    }
+
+
+    number =
+        Math.max(
+            1,
+            Math.min(6,number)
+        );
+
+
+    input.value = number;
+
+
+    const container =
+        document.getElementById(
+            "brownoutCapacityInputs"
+        );
+
+
+    container.innerHTML = "";
+
+
+    for(let i=1;i<=number;i++) {
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.className =
+            "brownout-input";
+
+
+        wrapper.innerHTML = `
+
+            <label>
+                After Brownout ${i}
+            </label>
+
+            <input
+                type="number"
+                id="brownoutAdd${i}"
+                min="5"
+                max="15"
+                value="10">
+
+            <div style="
+                font-size:0.7rem;
+                color:var(--text-muted);
+                margin-top:4px;">
+
+                +5 to +15 electrons
+
+            </div>
+
+        `;
+
+
+        container.appendChild(wrapper);
+
+    }
+
+}
+
+
+generateBrownoutCapacityInputs();
+
+
+/* ============================================================
+   LOGGING
+   ============================================================ */
+
+function appendLog(msg) {
+
+    const log =
+        document.getElementById(
+            "actionHistoryLog"
+        );
+
+
+    const element =
+        document.createElement("div");
+
+
+    element.className =
+        "log-item";
+
+
+    element.innerText =
+        `[Rd ${state.round}] ${msg}`;
+
+
+    log.insertBefore(
+        element,
+        log.firstChild
+    );
+
+}
+
+
+/* ============================================================
+   REGISTER PLAYER
+   ============================================================ */
+
+async function registerNeighbor() {
+
+    const input =
+        document.getElementById(
+            "pNameInput"
+        );
+
+
+    const name =
+        input.value.trim();
+
+
+    if(!name) {
+
+        await showMessage(
+            "Missing Neighbor Name",
+            "Please enter a name before adding a neighbor.",
+            "🏠"
+        );
+
+        return;
+
+    }
+
+
+    players.push({
+
+        name,
+
+        cash:500,
+
+        goodsE:0,
+
+        solarE:0,
+
+        netE:0,
+
+        happiness:0,
+
+        accumulatedHappiness:0,
+
+        goodsCards:[],
+
+        solarPanels:[],
+
+        showDetails:false,
+
+        lastPayDay:0,
+
+        lastUtilityBill:0,
+
+        lastGridFee:0,
+
+        finishedThisRound:false
+
+    });
+
+
+    input.value = "";
+
+    input.focus();
+
+
+    document.getElementById(
+        "interimList"
+    ).innerText =
+        "Registered: " +
+        players.map(p=>p.name).join(", ");
+
+}
+
+
+/* ============================================================
+   FIND NEXT UNFINISHED PLAYER
+   ============================================================ */
+
+function findNextUnfinishedPlayer(startIndex) {
+
+    if(players.length === 0) {
+
+        return -1;
+
+    }
+
+
+    for(
+        let offset=0;
+        offset<players.length;
+        offset++
+    ) {
+
+        const idx =
+            (
+                startIndex +
+                offset
+            ) %
+            players.length;
+
+
+        if(
+            !players[idx].finishedThisRound
+        ) {
+
+            return idx;
+
+        }
+
+    }
+
+
+    return -1;
+
+}
+
+
+/* ============================================================
+   ALL PLAYERS FINISHED
+   ============================================================ */
+
+function allPlayersFinished() {
+
+    if(players.length === 0) {
+
+        return false;
+
+    }
+
+
+    return players.every(
+        p=>p.finishedThisRound
+    );
+
+}
+
+
+/* ============================================================
+   FINISH PLAYER ROUND
+   ============================================================ */
+
+function finishPlayerRound(pIdx) {
+
+    const p =
+        players[pIdx];
+
+
+    if(!p || p.finishedThisRound) {
+
+        return;
+
+    }
+
+
+    p.finishedThisRound = true;
+
+
+    appendLog(
+        `${p.name} finished their play for Round ${state.round}.`
+    );
+
+
+    if(pIdx === state.activePlayerIdx) {
+
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(
+                (
+                    pIdx + 1
+                ) %
+                players.length
+            );
+
+    }
+
+
+    if(
+        state.activePlayerIdx === -1 ||
+        players[
+            state.activePlayerIdx
+        ]?.finishedThisRound
+    ) {
+
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(0);
+
+    }
+
+
+    if(allPlayersFinished()) {
+
+        state.activePlayerIdx = -1;
+
+        appendLog(
+            `All players have finished Round ${state.round}. Pay Day is now available.`
+        );
+
+    }
+
+
+    updateUserInterface();
+
+
+    if(allPlayersFinished()) {
+
+        promptRoundSettlement();
+
+    }
+
+}
+
+
+/* ============================================================
+   TOGGLE DETAILS
+   ============================================================ */
+
+function togglePlayerDetails(pIdx) {
+
+    if(!players[pIdx]) return;
+
+    players[pIdx].showDetails =
+        !players[pIdx].showDetails;
+
+    updateUserInterface();
+
+}
+
+
+/* ============================================================
+   ESTABLISH PARAMETERS
+   ============================================================ */
+
+function establishGridParameters() {
+
+    if(setupMode === "random") {
+
+        state.capacity =
+            randomInteger(30,50);
+
+        state.brownoutLimit =
+            randomInteger(1,6);
+
+        state.capacityAdditions = [];
+
+
+        for(
+            let i=0;
+            i<state.brownoutLimit;
+            i++
+        ) {
+
+            state.capacityAdditions.push(
+                randomInteger(5,15)
+            );
+
+        }
+
+
+        state.randomized = true;
+
+    }
+
+    else {
+
+        const capacity =
+            parseInt(
+                document.getElementById(
+                    "initialCapacityInput"
+                ).value
+            );
+
+
+        if(
+            isNaN(capacity) ||
+            capacity<30 ||
+            capacity>50
+        ) {
+
+            showMessage(
+                "Invalid Grid Capacity",
+                "Initial capacity must be between <strong>30 and 50 electrons</strong>.",
+                "⚡"
+            );
+
+            return false;
+
+        }
+
+
+        const limit =
+            parseInt(
+                document.getElementById(
+                    "brownoutLimitInput"
+                ).value
+            );
+
+
+        if(
+            isNaN(limit) ||
+            limit<1 ||
+            limit>6
+        ) {
+
+            showMessage(
+                "Invalid Brownout Limit",
+                "The number of brownouts before blackout must be between <strong>1 and 6</strong>.",
+                "⚠️"
+            );
+
+            return false;
+
+        }
+
+
+        let additions = [];
+
+
+        for(let i=1;i<=limit;i++) {
+
+            const value =
+                parseInt(
+                    document.getElementById(
+                        `brownoutAdd${i}`
+                    ).value
+                );
+
+
+            if(
+                isNaN(value) ||
+                value<5 ||
+                value>15
+            ) {
+
+                showMessage(
+                    "Invalid Capacity Addition",
+                    `Capacity added after Brownout ${i} must be between <strong>5 and 15 electrons</strong>.`,
+                    "🔧"
+                );
+
+                return false;
+
+            }
+
+
+            additions.push(value);
+
+        }
+
+
+        state.capacity = capacity;
+
+        state.brownoutLimit = limit;
+
+        state.capacityAdditions = additions;
+
+        state.randomized = false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/* ============================================================
+   START GAME
+   ============================================================ */
+
+async function commenceGridSimulation() {
+
+    if(players.length === 0) {
+
+        await showMessage(
+            "No Neighbors Registered",
+            "Please register at least one player before starting the grid manager.",
+            "🏠"
+        );
+
+        return;
+
+    }
+
+
+    if(!establishGridParameters()) {
+
+        return;
+
+    }
+
+
+    state.gamePolicy =
+        document.getElementById(
+            "gamePolicyInput"
+        ).value;
+
+
+    state.electricityRate = 20;
+
+    state.highDemandActive = false;
+
+
+    players.forEach(
+        p=>p.finishedThisRound=false
+    );
+
+
+    document.getElementById(
+        "setupView"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "managerView"
+    ).style.display = "block";
+
+
+    document.getElementById(
+        "gridDashboard"
+    ).style.display = "grid";
+
+
+    state.activePlayerIdx =
+        state.startingPlayerIdx;
+
+
+    if(state.randomized) {
+
+        document.getElementById(
+            "demandDashboardCard"
+        ).style.display = "none";
+
+        document.getElementById(
+            "brownoutDashboardCard"
+        ).style.display = "none";
+
+    }
+
+    else {
+
+        document.getElementById(
+            "demandDashboardCard"
+        ).style.display = "block";
+
+        document.getElementById(
+            "brownoutDashboardCard"
+        ).style.display = "block";
+
+    }
+
+
+    evaluateSystemDemand();
+
+    updateBrownoutBoxes();
+
+    updateUserInterface();
+
+
+    appendLog(
+        `Grid initialized with ${state.capacity}e capacity.`
+    );
+
+
+    if(state.gamePolicy === "systemFines") {
+
+        appendLog(
+            "Game Policy: System Fines for Exceeding Capacity."
+        );
+
+    }
+
+    else if(
+        state.gamePolicy ===
+        "flexibleBilling"
+    ) {
+
+        appendLog(
+            "Game Policy: Flexible Billing Rates. " +
+            "Utility electricity costs $20/e normally and rises to $30/e " +
+            "when neighborhood demand comes within 10e of grid capacity."
+        );
+
+    }
+
+    else {
+
+        appendLog(
+            "Game Policy: No Policies. Over-capacity purchases will not receive system fines."
+        );
+
+    }
+
+
+    if(!state.randomized) {
+
+        appendLog(
+            `Blackout threshold: ${state.brownoutLimit} brownout(s).`
+        );
+
+        appendLog(
+            `Capacity additions after brownouts: ${
+                state.capacityAdditions.join(", ")
+            }e.`
+        );
+
+    }
+
+    else {
+
+        appendLog(
+            "Grid parameters randomized and hidden from players."
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   DEMAND
+   ============================================================ */
+
+function evaluateSystemDemand(
+    allowHighDemandTrigger = true
+) {
+
+    let currentLoad = 0;
+
+
+    players.forEach(p=>{
+
+        currentLoad += p.goodsE;
+
+        currentLoad -= p.solarE;
+
+    });
+
+
+    document.getElementById(
+        "dispDemand"
+    ).innerText =
+        `${currentLoad} / ${state.capacity} e`;
+
+
+    if(currentLoad > state.capacity) {
+
+        document.getElementById(
+            "dispDemand"
+        ).style.color =
+            "var(--danger)";
+
+
+        if(state.upgradeRequired) {
+
+            document.getElementById(
+                "upgradeGridBtn"
+            ).style.display =
+                "block";
+
+        }
+
+    }
+
+    else {
+
+        document.getElementById(
+            "dispDemand"
+        ).style.color =
+            "var(--text-main)";
+
+    }
+
+
+    evaluateFlexibleBilling(
+        currentLoad,
+        allowHighDemandTrigger
+    );
+
+
+    return currentLoad;
+
+}
+
+
+/* ============================================================
+   SOLAR PANEL SPECIAL TURN
+   ============================================================ */
+
+function getSolarPanelEligiblePlayers() {
+
+    return players
+        .map((p,index)=>{
+
+            return {
+
+                playerIndex:index,
+
+                cash:p.cash
+
+            };
+
+        })
+        .filter(entry =>
+            entry.cash >= 2000
+        );
+
+}
+
+
+/* ============================================================
+   START SOLAR PANEL-ONLY TURN SEQUENCE
+   ============================================================ */
+
+async function startSolarPanelOnlyTurns() {
+
+    const eligiblePlayers =
+        getSolarPanelEligiblePlayers();
+
+
+    if(eligiblePlayers.length === 0) {
+
+        return;
+
+    }
+
+
+    eligiblePlayers.forEach(entry => {
+
+        players[
+            entry.playerIndex
+        ].finishedThisRound = false;
+
+    });
+
+
+    state.normalTurnReturnIndex =
+        state.activePlayerIdx;
+
+
+    state.solarPanelEligiblePlayers =
+        eligiblePlayers.map(
+            entry=>entry.playerIndex
+        );
+
+
+    state.solarPanelCompletedPlayers = [];
+
+
+    state.solarPanelTurnIndex = 0;
+
+    state.solarPanelSpecialTurn = true;
+
+    state.solarPanelPurchasedDuringOpportunity = false;
+
+
+    appendLog(
+        `☀️ Solar Panel special turn activated. ` +
+        `${state.solarPanelEligiblePlayers.length} eligible player(s) ` +
+        `will receive a Solar Panel-only turn.`
+    );
+
+
+    state.activePlayerIdx =
+        state.solarPanelEligiblePlayers[
+            state.solarPanelTurnIndex
+        ];
+
+
+    updateUserInterface();
+
+
+    await showMessage(
+
+        "☀️ Solar Panel Purchase Opportunity",
+
+        `
+
+        <div class="modal-event success">
+
+            <strong>
+                Solar Panel purchasing is now available.
+            </strong>
+
+            <br><br>
+
+            Every player with
+            <strong>$2,000 or more in Wallet Cash</strong>
+            will receive one special Solar Panel-only turn.
+
+        </div>
+
+
+        <div style="
+            margin-top:15px;
+            color:var(--text-muted);
+            font-size:0.85rem;">
+
+            During these special turns:
+
+            <ul style="
+                margin-top:8px;
+                padding-left:20px;">
+
+                <li>
+                    Only Solar Panel cards may be purchased.
+                </li>
+
+                <li>
+                    Goods cards are temporarily removed from the gameplay panel.
+                </li>
+
+                <li>
+                    If a player's two Solar Panel house slots
+                    are full, they must discard one before
+                    purchasing another.
+                </li>
+
+                <li>
+                    Each eligible player may choose
+                    <strong>No Purchase This Turn -- Finish Round</strong>.
+                </li>
+
+                <li>
+                    The special round continues until
+                    <strong>every eligible player</strong> has made their choice.
+                </li>
+
+            </ul>
+
+        </div>
+
+        `,
+
+        "☀️",
+
+        "Begin Solar Panel Turns"
+
+    );
+
+}
+
+
+/* ============================================================
+   ADVANCE SOLAR PANEL SPECIAL TURN
+   ============================================================ */
+
+async function advanceSolarPanelTurn() {
+
+    if(!state.solarPanelSpecialTurn) {
+
+        return;
+
+    }
+
+
+    const completedPlayerIdx =
+        state.activePlayerIdx;
+
+
+    if(
+        completedPlayerIdx !== -1 &&
+        state.solarPanelEligiblePlayers.includes(
+            completedPlayerIdx
+        ) &&
+        !state.solarPanelCompletedPlayers.includes(
+            completedPlayerIdx
+        )
+    ) {
+
+        state.solarPanelCompletedPlayers.push(
+            completedPlayerIdx
+        );
+
+    }
+
+
+    const nextEligiblePlayer =
+        state.solarPanelEligiblePlayers.find(
+            playerIndex =>
+                !state.solarPanelCompletedPlayers.includes(
+                    playerIndex
+                )
+        );
+
+
+    if(nextEligiblePlayer !== undefined) {
+
+        state.solarPanelTurnIndex += 1;
+
+        state.activePlayerIdx =
+            nextEligiblePlayer;
+
+
+        appendLog(
+            `☀️ ${players[nextEligiblePlayer].name} is now taking their Solar Panel-only turn.`
+        );
+
+
+        updateUserInterface();
+
+        return;
+
+    }
+
+
+    const returnIndex =
+        state.normalTurnReturnIndex;
+
+    const solarPanelWasPurchased =
+        state.solarPanelPurchasedDuringOpportunity;
+
+
+    state.solarPanelSpecialTurn = false;
+
+    state.solarPanelEligiblePlayers = [];
+
+    state.solarPanelCompletedPlayers = [];
+
+    state.solarPanelTurnIndex = 0;
+
+    state.normalTurnReturnIndex = -1;
+
+    state.solarPanelPurchasedDuringOpportunity = false;
+
+
+    state.activePlayerIdx =
+        returnIndex;
+
+
+    appendLog(
+        `☀️ Solar Panel special round complete. ` +
+        `All eligible players have completed their Solar Panel opportunity. ` +
+        `Returning to normal gameplay.`
+    );
+
+
+    if(solarPanelWasPurchased) {
+
+        state.upgradeRequired = false;
+
+
+        document.getElementById(
+            "upgradeGridBtn"
+        ).style.display =
+            "none";
+
+
+        appendLog(
+            `☀️ Solar Panel purchased during the special opportunity. ` +
+            `Grid Capacity Upgrade skipped. Normal gameplay resumes.`
+        );
+
+
+        let startingPoint =
+            state.activePlayerIdx;
+
+
+        if(startingPoint === -1) {
+
+            startingPoint = 0;
+
+        }
+
+
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(
+                startingPoint
+            );
+
+
+        evaluateSystemDemand(false);
+
+        updateUserInterface();
+
+
+        if(state.activePlayerIdx !== -1) {
+
+            const currentPlayerIdx =
+                state.activePlayerIdx;
+
+            await promptFinishRound(
+                currentPlayerIdx
+            );
+
+        }
+
+
+        return;
+
+    }
+
+
+    updateUserInterface();
+
+
+    if(state.upgradeRequired) {
+
+        await applyGridUpgrade();
+
+    }
+
+
+    return;
+
+}
+
+
+/* ============================================================
+   NO PURCHASE
+   ============================================================ */
+
+async function noPurchase(pIdx) {
+
+    if(state.solarPanelSpecialTurn) {
+
+        if(
+            pIdx !== state.activePlayerIdx
+        ) {
+
+            return;
+
+        }
+
+
+        const p =
+            players[pIdx];
+
+
+        if(!p) {
+
+            return;
+
+        }
+
+
+        appendLog(
+            `${p.name} chose not to purchase a Solar Panel this special turn.`
+        );
+
+
+        await advanceSolarPanelTurn();
+
+        return;
+
+    }
+
+
+    if(state.upgradeRequired) {
+
+        await showMessage(
+            "Grid Upgrade Required",
+            "The grid must be upgraded before the next player can complete their turn.",
+            "🔧"
+        );
+
+        return;
+
+    }
+
+
+    const p =
+        players[pIdx];
+
+
+    if(!p || p.finishedThisRound) {
+
+        return;
+
+    }
+
+
+    appendLog(
+        `${p.name} chose not to purchase a card this turn.`
+    );
+
+
+    finishPlayerRound(pIdx);
+
+}
+
+
+/* ============================================================
+   AUTOMATIC FINANCIAL SHORTFALL
+   ============================================================ */
+
+function collectPayment(
+    player,
+    amount,
+    paymentName
+) {
+
+    if(amount <= 0) {
+
+        return {
+
+            cashPaid:0,
+
+            happinessUsed:0,
+
+            totalValue:0
+
+        };
+
+    }
+
+
+    const cashAvailable =
+        Math.max(0,player.cash);
+
+
+    const cashPaid =
+        Math.min(
+            cashAvailable,
+            amount
+        );
+
+
+    player.cash -= cashPaid;
+
+
+    const remaining =
+        amount - cashPaid;
+
+
+    let happinessUsed = 0;
+
+
+    if(remaining > 0) {
+
+        happinessUsed =
+            Math.ceil(
+                remaining / 50
+            );
+
+
+        player.happiness -=
+            happinessUsed;
+
+    }
+
+
+    if(cashPaid > 0) {
+
+        appendLog(
+            `${player.name} paid $${cashPaid.toLocaleString()} toward ${paymentName}.`
+        );
+
+    }
+
+
+    if(happinessUsed > 0) {
+
+        appendLog(
+            `💔 ${player.name} could not fully pay ${paymentName}. ` +
+            `${happinessUsed} Happiness Point(s) were deducted ` +
+            `to cover the remaining $${remaining.toLocaleString()}.`
+        );
+
+    }
+
+
+    return {
+
+        cashPaid,
+
+        happinessUsed,
+
+        totalValue:
+            cashPaid +
+            happinessUsed * 50
+
+    };
+
+}
+
+
+/* ============================================================
+   BROWNOUT EVENT
+   ============================================================ */
+
+async function showBrownoutEvent(
+    player,
+    brownoutNumber,
+    excess,
+    fineAmount,
+    happinessUsed
+) {
+
+    const systemFinesActive =
+        state.gamePolicy ===
+        "systemFines";
+
+
+    const financialSection =
+        systemFinesActive
+
+        ? `
+
+        <div class="modal-financial-grid">
+
+            <div class="modal-financial-item">
+
+                <div class="modal-financial-label">
+                    System Fine
+                </div>
+
+                <div class="modal-financial-value"
+                     style="color:var(--danger);">
+
+                    $${fineAmount.toLocaleString()}
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-financial-item">
+
+                <div class="modal-financial-label">
+                    Happiness Deduction
+                </div>
+
+                <div class="modal-financial-value"
+                     style="color:#a855f7;">
+
+                    ${
+                        happinessUsed > 0
+                            ? `-${happinessUsed} 😊`
+                            : "None"
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div style="
+            margin-top:15px;
+            color:var(--text-muted);
+            font-size:0.85rem;">
+
+            If the player cannot cover the
+            entire fine, the remaining amount is converted
+            into Happiness Points at a rate of
+            <strong>$50 per point</strong>, rounded up.
+
+        </div>
+
+        `
+
+        : state.gamePolicy === "flexibleBilling"
+
+            ? `
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        System Fine
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--success);">
+
+                        None
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Active Policy
+                    </div>
+
+                    <div class="modal-financial-value">
+
+                        Flexible Billing
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);
+                font-size:0.85rem;">
+
+                Flexible Billing does not impose an
+                over-capacity system fine.
+
+                <br><br>
+
+                The brownout still occurs and grid-capacity
+                expansion rules and associated grid fees
+                still apply.
+
+            </div>
+
+            `
+
+            : `
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        System Fine
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--success);">
+
+                        None
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Active Policy
+                    </div>
+
+                    <div class="modal-financial-value">
+
+                        No Policies
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);
+                font-size:0.85rem;">
+
+                The <strong>No Policies</strong> setting means
+                the player receives no financial penalty for
+                causing demand to exceed grid capacity.
+
+                <br><br>
+
+                The brownout still occurs, and any required
+                <strong>grid capacity expansion and associated
+                grid fees still apply</strong>.
+
+            </div>
+
+            `;
+
+
+    await showMessage(
+
+        `GRID BROWNOUT ${brownoutNumber}`,
+
+        `
+
+        <div class="modal-event danger">
+
+            <strong>
+                ⚠️ Neighborhood demand exceeded available capacity.
+            </strong>
+
+            <br><br>
+
+            <strong>${player.name}</strong>'s purchase caused
+            demand to exceed the grid by
+            <strong>${excess} electron(s)</strong>.
+
+        </div>
+
+
+        ${financialSection}
+
+        `,
+
+        "⚠️",
+
+        "Continue"
+
+    );
+
+}
+
+
+/* ============================================================
+   BUY CARD
+   ============================================================ */
+
+async function buyCard(
+    pIdx,
+    cardType,
+    cardIndex
+) {
+
+    if(
+        state.upgradeRequired &&
+        !state.solarPanelSpecialTurn
+    ) {
+
+        await showMessage(
+            "Grid Upgrade Required",
+            "The grid must be upgraded before the next player can purchase a card.",
+            "🔧"
+        );
+
+        return;
+
+    }
+
+
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        pIdx !== state.activePlayerIdx
+    ) {
+
+        return;
+
+    }
+
+
+    if(
+        !state.solarPanelSpecialTurn &&
+        p.finishedThisRound
+    ) {
+
+        return;
+
+    }
+
+
+    if(
+        state.solarPanelSpecialTurn &&
+        cardType !== "blue"
+    ) {
+
+        return;
+
+    }
+
+
+    if(
+        state.solarPanelSpecialTurn &&
+        !state.solarPanelEligiblePlayers.includes(pIdx)
+    ) {
+
+        return;
+
+    }
+
+
+    if(
+        state.solarPanelSpecialTurn &&
+        state.solarPanelCompletedPlayers.includes(pIdx)
+    ) {
+
+        return;
+
+    }
+
+
+    const deck =
+        cardType === "yellow"
+            ? goodsCards
+            : solarPanelCards;
+
+
+    const houseType =
+        cardType === "yellow"
+            ? "goods"
+            : "solar";
+
+
+    const houseCollection =
+        houseType === "goods"
+            ? p.goodsCards
+            : p.solarPanels;
+
+
+    const houseCapacity =
+        houseType === "goods"
+            ? 4
+            : 2;
+
+
+    const card =
+        deck[cardIndex];
+
+
+    if(!card) return;
+
+
+    if(card.quantity <= 0) {
+
+        await showMessage(
+            "Card Unavailable",
+            "That card is no longer available in the neighborhood card supply.",
+            "🃏"
+        );
+
+        return;
+
+    }
+
+
+    if(p.cash < card.price) {
+
+        await showMessage(
+
+            "Insufficient Funds",
+
+            `
+
+            <strong>${p.name}</strong> does not have enough
+            cash to purchase this card.
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Card Price
+                    </div>
+
+                    <div class="modal-financial-value">
+                        $${card.price.toLocaleString()}
+                    </div>
+
+                </div>
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Available Cash
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--success);">
+
+                        $${p.cash.toLocaleString()}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            `,
+
+            "💰"
+
+        );
+
+        return;
+
+    }
+
+
+    let selectedDiscardIndex = -1;
+
+
+    if(houseCollection.length >= houseCapacity) {
+
+        selectedDiscardIndex =
+            await chooseHouseCardToDiscard(
+                p,
+                houseType,
+                card
+            );
+
+
+        if(
+            selectedDiscardIndex === -1 ||
+            selectedDiscardIndex === undefined
+        ) {
+
+            return;
+
+        }
+
+    }
+
+
+    let discardPreview = "";
+
+
+    if(selectedDiscardIndex >= 0) {
+
+        const selectedCard =
+            houseCollection[
+                selectedDiscardIndex
+            ];
+
+
+        discardPreview = `
+
+            <div class="modal-event warning">
+
+                <strong>
+                    🗑️ House Space Required
+                </strong>
+
+                <br><br>
+
+                ${selectedCard.id} will be sent to the landfill
+                and returned to the neighborhood board.
+
+                <br><br>
+
+                <span style="
+                    color:var(--text-muted);
+                    font-size:0.85rem;">
+
+                    The discarded card will no longer contribute
+                    to this player's electricity demand, but it
+                    will become available for another player to
+                    purchase again.
+
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
+
+    const confirmed =
+        await showConfirmation(
+
+            `${p.name}: Confirm Purchase`,
+
+            `
+
+            <div class="modal-event">
+
+                <strong>
+                    You are purchasing:
+                </strong>
+
+                <br><br>
+
+                ${cardType === "yellow"
+                    ? "🛒 Goods Card"
+                    : "☀️ Solar Panel Card"}
+
+                <strong>${card.id}</strong>
+
+            </div>
+
+
+            ${discardPreview}
+
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Price
+                    </div>
+
+                    <div class="modal-financial-value">
+                        $${card.price.toLocaleString()}
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Happiness
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:#a855f7;">
+
+                        +${card.happiness} 😊
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+
+                        ${
+                            cardType === "yellow"
+                                ? "⚡ Electricity Use"
+                                : "⚡ Electricity Generation"
+                        }
+
+                    </div>
+
+                    <div class="modal-financial-value">
+
+                        ${
+                            cardType === "yellow"
+                                ? `${Math.abs(card.electrons)}e`
+                                : `+${card.electrons}e`
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Cards Remaining
+                    </div>
+
+                    <div class="modal-financial-value">
+
+                        ${card.quantity - 1}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            `,
+
+            "🛒",
+
+            "Purchase",
+
+            "success"
+
+        );
+
+
+    if(!confirmed) return;
+
+
+    if(
+        state.solarPanelSpecialTurn &&
+        (
+            cardType !== "blue" ||
+            !state.solarPanelEligiblePlayers.includes(pIdx) ||
+            state.solarPanelCompletedPlayers.includes(pIdx)
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    if(card.quantity <= 0) {
+
+        await showMessage(
+            "Card No Longer Available",
+            "That card is no longer available in the neighborhood card supply.",
+            "🃏"
+        );
+
+        return;
+
+    }
+
+
+    if(p.cash < card.price) {
+
+        await showMessage(
+            "Insufficient Funds",
+            "The player's available cash is no longer sufficient to complete this purchase.",
+            "💰"
+        );
+
+        return;
+
+    }
+
+
+    if(houseCollection.length >= houseCapacity) {
+
+        if(
+            selectedDiscardIndex < 0 ||
+            !houseCollection[selectedDiscardIndex]
+        ) {
+
+            await showMessage(
+                "House Space Required",
+                "A card must be discarded before this purchase can be completed.",
+                "🏠"
+            );
+
+            return;
+
+        }
+
+
+        discardHouseCard(
+            p,
+            houseType,
+            selectedDiscardIndex
+        );
+
+    }
+
+
+    card.quantity -= 1;
+
+    state.anyPurchases = true;
+
+    p.cash -= card.price;
+
+
+    const houseCard =
+        createHouseCard(card);
+
+
+    if(cardType === "yellow") {
+
+        p.goodsCards.push(
+            houseCard
+        );
+
+
+        const electronUse =
+            Math.abs(card.electrons);
+
+
+        p.goodsE +=
+            electronUse;
+
+        p.happiness +=
+            card.happiness;
+
+        p.netE =
+            p.solarE -
+            p.goodsE;
+
+
+        appendLog(
+            `${p.name} purchased Goods Card ${card.id}. ` +
+            `Paid $${card.price.toLocaleString()}, ` +
+            `used ${electronUse}e, ` +
+            `gained +${card.happiness} happiness.`
+        );
+
+
+        const load =
+            evaluateSystemDemand();
+
+
+        if(load > state.capacity) {
+
+            state.brownouts += 1;
+
+
+            const excess =
+                load -
+                state.capacity;
+
+
+            let fineAmount = 0;
+
+
+            let payment = {
+
+                cashPaid:0,
+
+                happinessUsed:0,
+
+                totalValue:0
+
+            };
+
+
+            if(
+                state.gamePolicy ===
+                "systemFines"
+            ) {
+
+                fineAmount =
+                    excess * 50;
+
+
+                payment =
+                    collectPayment(
+                        p,
+                        fineAmount,
+                        `the Brownout ${state.brownouts} fine`
+                    );
+
+            }
+
+            else {
+
+                appendLog(
+                    `📜 ${p.name} received no system fine ` +
+                    `for exceeding grid capacity by ${excess}e ` +
+                    `under the active game policy.`
+                );
+
+            }
+
+
+            appendLog(
+                `⚠️ BROWNOUT ${state.brownouts}! ` +
+                `Neighborhood demand reached ${load}e ` +
+                `(Exceeded capacity by ${excess}e).`
+            );
+
+
+            updateBrownoutBoxes();
+
+
+            if(
+                state.brownouts >=
+                state.brownoutLimit
+            ) {
+
+                updateUserInterface();
+
+                await showBrownoutEvent(
+                    p,
+                    state.brownouts,
+                    excess,
+                    fineAmount,
+                    payment.happinessUsed
+                );
+
+                forceEndGame("blackout");
+
+                return;
+
+            }
+
+
+            state.upgradeRequired = true;
+
+
+            document.getElementById(
+                "upgradeGridBtn"
+            ).style.display =
+                "block";
+
+
+            updateUserInterface();
+
+
+            await showBrownoutEvent(
+                p,
+                state.brownouts,
+                excess,
+                fineAmount,
+                payment.happinessUsed
+            );
+
+
+            await applyGridUpgrade();
+
+            return;
+
+        }
+
+    }
+
+
+    else {
+
+        p.solarPanels.push(
+            houseCard
+        );
+
+
+        p.solarE +=
+            card.electrons;
+
+        p.happiness +=
+            card.happiness;
+
+        p.netE =
+            p.solarE -
+            p.goodsE;
+
+
+        appendLog(
+            `${p.name} purchased Solar Panel Card ${card.id}. ` +
+            `Paid $${card.price.toLocaleString()}, ` +
+            `generated +${card.electrons}e, ` +
+            `gained +${card.happiness} happiness.`
+        );
+
+
+        /*
+         * Flexible Billing:
+         * A Solar Panel purchase resets the electricity rate
+         * to the normal $20/e. The demand calculation is then
+         * refreshed without immediately retriggering high-demand
+         * pricing from this same Solar Panel transaction.
+         */
+
+        if(
+            state.gamePolicy ===
+            "flexibleBilling"
+        ) {
+
+            resetFlexibleBillingRate(
+                "after Solar Panel generation reduced neighborhood demand"
+            );
+
+            evaluateSystemDemand(false);
+
+        }
+
+        else {
+
+            evaluateSystemDemand();
+
+        }
+
+
+        if(state.solarPanelSpecialTurn) {
+
+            state.solarPanelPurchasedDuringOpportunity = true;
+
+        }
+
+    }
+
+
+    if(state.solarPanelSpecialTurn) {
+
+        updateUserInterface();
+
+        await advanceSolarPanelTurn();
+
+        return;
+
+    }
+
+
+    if(!state.upgradeRequired) {
+
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(
+                (
+                    pIdx + 1
+                ) %
+                players.length
+            );
+
+    }
+
+
+    updateUserInterface();
+
+
+    await promptFinishRound(pIdx);
+
+}
+
+
+/* ============================================================
+   BROWNOUT DISPLAY
+   ============================================================ */
+
+function updateBrownoutBoxes() {
+
+    const container =
+        document.getElementById(
+            "brownoutDisplay"
+        );
+
+
+    container.innerHTML = "";
+
+
+    for(
+        let i=1;
+        i<=state.brownoutLimit;
+        i++
+    ) {
+
+        const box =
+            document.createElement("div");
+
+
+        box.id =
+            `bo${i}`;
+
+
+        box.className =
+            "bo-box";
+
+
+        box.innerText = i;
+
+
+        container.appendChild(box);
+
+    }
+
+
+    for(
+        let i=1;
+        i<=state.brownouts;
+        i++
+    ) {
+
+        const box =
+            document.getElementById(
+                `bo${i}`
+            );
+
+
+        if(box) {
+
+            box.className =
+                "bo-box active";
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   GRID UPGRADE
+   ============================================================ */
+
+async function applyGridUpgrade() {
+
+    const nextUpgradeIndex =
+        state.brownouts - 1;
+
+
+    const capacityIncrease =
+        state.capacityAdditions[
+            nextUpgradeIndex
+        ];
+
+
+    if(
+        capacityIncrease === undefined
+    ) {
+
+        await showMessage(
+            "No Upgrade Available",
+            "No further grid capacity upgrades are available.",
+            "🔧"
+        );
+
+        return;
+
+    }
+
+
+    const currentTierFee =
+        state.brownouts === 1
+            ? 20
+            : state.brownouts === 2
+                ? 40
+                : 60;
+
+
+    let upgradeMessage;
+
+
+    if(state.randomized) {
+
+        upgradeMessage = `
+
+            <div class="modal-event warning">
+
+                <strong>
+                    ⚡ Grid capacity must be expanded.
+                </strong>
+
+                <br><br>
+
+                The neighborhood must approve the required
+                grid upgrade before play can continue.
+
+            </div>
+
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Permanent System Fee
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--warning);">
+
+                        +$${currentTierFee}/round
+
+                    </div>
+
+                </div>
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Capacity
+                    </div>
+
+                    <div class="modal-financial-value">
+                        Hidden
+                    </div>
+
+                </div>
+
+            </div>
+
+            `;
+
+    }
+
+    else {
+
+        upgradeMessage = `
+
+            <div class="modal-event warning">
+
+                <strong>
+                    ⚡ Grid capacity must be expanded.
+                </strong>
+
+                <br><br>
+
+                Add
+                <strong>${capacityIncrease} electrons</strong>
+                to the grid?
+
+            </div>
+
+
+            <div class="modal-financial-grid">
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        Current Capacity
+                    </div>
+
+                    <div class="modal-financial-value">
+                        ${state.capacity}e
+                    </div>
+
+                </div>
+
+
+                <div class="modal-financial-item">
+
+                    <div class="modal-financial-label">
+                        New Capacity
+                    </div>
+
+                    <div class="modal-financial-value"
+                         style="color:var(--success);">
+
+                        ${
+                            state.capacity +
+                            capacityIncrease
+                        }e
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            `;
+
+    }
+
+
+    upgradeMessage += `
+
+        <div style="
+            margin-top:15px;
+            color:var(--text-muted);">
+
+            Approving this upgrade permanently adds
+            <strong>$${currentTierFee}/round</strong>
+            to every neighbor's grid fee.
+
+        </div>
+
+    `;
+
+
+    const solarEligiblePlayers =
+        getSolarPanelEligiblePlayers();
+
+
+    const upgradeButtons = [];
+
+
+    if(solarEligiblePlayers.length > 0) {
+
+        upgradeButtons.push({
+
+            text:"Purchase Solar Panel",
+
+            className:"primary",
+
+            value:"solar"
+
+        });
+
+    }
+
+
+    upgradeButtons.push({
+
+        text:"Approve Upgrade",
+
+        className:"purple",
+
+        value:"upgrade"
+
+    });
+
+
+    const choice =
+        await openGameModal({
+
+            title:
+                "Grid Capacity Upgrade",
+
+            body:
+                upgradeMessage,
+
+            icon:"🔧",
+
+            buttons:
+                upgradeButtons
+
+        });
+
+
+    if(choice === "solar") {
+
+        await startSolarPanelOnlyTurns();
+
+        return;
+
+    }
+
+
+    if(choice !== "upgrade") {
+
+        return;
+
+    }
+
+
+    state.capacity +=
+        capacityIncrease;
+
+
+    state.feePerRound +=
+        currentTierFee;
+
+
+    state.upgradeRequired = false;
+
+
+    /*
+     * Flexible Billing:
+     * A completed capacity expansion resets the utility rate
+     * to the normal $20/e. The new capacity is displayed without
+     * immediately retriggering high-demand pricing.
+     */
+
+    if(
+        state.gamePolicy ===
+        "flexibleBilling"
+    ) {
+
+        resetFlexibleBillingRate(
+            "after the grid capacity expansion"
+        );
+
+    }
+
+
+    appendLog(
+        `🔧 Grid capacity upgraded by ${capacityIncrease}e ` +
+        `to ${state.capacity}e. ` +
+        `Added persistent $${currentTierFee}/round fee.`
+    );
+
+
+    document.getElementById(
+        "upgradeGridBtn"
+    ).style.display =
+        "none";
+
+
+    let startingPoint =
+        state.activePlayerIdx;
+
+
+    if(startingPoint === -1) {
+
+        startingPoint = 0;
+
+    }
+
+
+    state.activePlayerIdx =
+        findNextUnfinishedPlayer(
+            startingPoint
+        );
+
+
+    if(
+        state.gamePolicy ===
+        "flexibleBilling"
+    ) {
+
+        evaluateSystemDemand(false);
+
+    }
+
+    else {
+
+        evaluateSystemDemand();
+
+    }
+
+
+    updateUserInterface();
+
+
+    if(state.activePlayerIdx !== -1) {
+
+        const currentPlayerIdx =
+            state.activePlayerIdx;
+
+        await promptFinishRound(
+            currentPlayerIdx
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   ROUND-END PAYMENTS
+   ============================================================ */
+
+async function executeRoundEndPayments() {
+
+    if(!allPlayersFinished()) {
+
+        await showMessage(
+
+            "Round Not Complete",
+
+            `
+
+            <div class="modal-event warning">
+
+                <strong>
+                    ⏳ The round cannot be settled yet.
+                </strong>
+
+                <br><br>
+
+                Every player must click
+                <strong>Finish for This Round</strong>
+                before Pay Day and Utility Bills can be processed.
+
+            </div>
+
+            `,
+
+            "🏁"
+
+        );
+
+        return;
+
+    }
+
+
+    if(state.upgradeRequired) {
+
+        await showMessage(
+            "Grid Upgrade Required",
+            "The grid must be upgraded before Pay Day can be processed.",
+            "🔧"
+        );
+
+        return;
+
+    }
+
+
+    appendLog(
+        `--- Executing Round ${state.round} Financial Settlement ---`
+    );
+
+
+    players.forEach(p=>{
+
+        p.accumulatedHappiness +=
+            p.happiness;
+
+
+        appendLog(
+            `${p.name} accumulated ${p.happiness} Happiness Point(s) ` +
+            `for Round ${state.round}. ` +
+            `Accumulated Happiness is now ${p.accumulatedHappiness}.`
+        );
+
+    });
+
+
+    const financialEvents = [];
+
+
+    players.forEach(p=>{
+
+        const payDay = 500;
+
+
+        /*
+         * Flexible Billing only changes the price charged
+         * for electricity consumption.
+         *
+         * Surplus electricity income remains at the game's
+         * existing $20 per electron.
+         */
+
+        const utilityRate =
+            state.gamePolicy === "flexibleBilling"
+                ? state.electricityRate
+                : 20;
+
+
+        const utilityBill =
+            p.netE < 0
+                ? Math.abs(p.netE) *
+                  utilityRate
+                : 0;
+
+
+        const surplusPayment =
+            p.netE > 0
+                ? p.netE * 20
+                : 0;
+
+
+        p.cash += payDay;
+
+
+        if(surplusPayment > 0) {
+
+            p.cash += surplusPayment;
+
+
+            appendLog(
+                `${p.name} earned $${surplusPayment} for generating surplus power.`
+            );
+
+        }
+
+
+        const utilityPayment =
+            collectPayment(
+                p,
+                utilityBill,
+                "their utility bill"
+            );
+
+
+        const gridFee =
+            state.feePerRound;
+
+
+        const gridFeePayment =
+            collectPayment(
+                p,
+                gridFee,
+                "their grid fee"
+            );
+
+
+        p.lastPayDay =
+            payDay +
+            surplusPayment;
+
+
+        p.lastUtilityBill =
+            utilityBill;
+
+
+        p.lastGridFee =
+            gridFee;
+
+
+        financialEvents.push({
+
+            player:p,
+
+            payDay,
+
+            surplusPayment,
+
+            utilityBill,
+
+            utilityRate,
+
+            utilityHappiness:
+                utilityPayment.happinessUsed,
+
+            gridFee,
+
+            gridFeeHappiness:
+                gridFeePayment.happinessUsed
+
+        });
+
+    });
+
+
+    updateUserInterface();
+
+
+    let settlementHTML = `
+
+        <div class="modal-event success">
+
+            <strong>
+                💰 Round ${state.round} financial settlement complete.
+            </strong>
+
+            <br><br>
+
+            Pay Day, utility bills, surplus payments,
+            and grid fees have been processed.
+
+            <br><br>
+
+            Each player's current Happiness Index has also
+            been added to their Accumulated Happiness.
+
+            ${
+                state.gamePolicy === "flexibleBilling"
+                    ? `
+
+                    <br><br>
+
+                    <strong>
+                        Current Utility Rate:
+                        $${state.electricityRate}/electron
+                    </strong>
+
+                    `
+                    : ""
+            }
+
+        </div>
+
+    `;
+
+
+    financialEvents.forEach(event=>{
+
+        const p =
+            event.player;
+
+
+        const happinessDeductions =
+            event.utilityHappiness +
+            event.gridFeeHappiness;
+
+
+        settlementHTML += `
+
+            <div style="
+                margin-top:12px;
+                padding:12px;
+                background:#0b1220;
+                border:1px solid var(--border);
+                border-radius:8px;">
+
+                <strong>
+                    🏠 ${p.name}
+                </strong>
+
+                <div style="
+                    display:grid;
+                    grid-template-columns:1fr 1fr;
+                    gap:5px;
+                    margin-top:8px;
+                    font-size:0.85rem;">
+
+                    <span>
+                        Pay Day:
+                    </span>
+
+                    <strong style="color:var(--success);">
+                        +$${event.payDay.toLocaleString()}
+                    </strong>
+
+
+                    ${
+                        event.surplusPayment > 0
+                        ? `
+
+                        <span>
+                            Surplus Income:
+                        </span>
+
+                        <strong style="color:var(--success);">
+                            +$${event.surplusPayment.toLocaleString()}
+                        </strong>
+
+                        `
+                        : ""
+                    }
+
+
+                    ${
+                        state.gamePolicy === "flexibleBilling"
+                            ? `
+
+                            <span>
+                                Utility Rate:
+                            </span>
+
+                            <strong style="
+                                color:${
+                                    event.utilityRate === 30
+                                        ? "var(--warning)"
+                                        : "var(--text-main)"
+                                };">
+
+                                $${event.utilityRate}/e
+
+                            </strong>
+
+                            `
+                            : ""
+                    }
+
+
+                    <span>
+                        Utility Bill:
+                    </span>
+
+                    <strong style="color:var(--danger);">
+                        -$${event.utilityBill.toLocaleString()}
+                    </strong>
+
+
+                    <span>
+                        Grid Fee:
+                    </span>
+
+                    <strong style="color:var(--danger);">
+                        -$${event.gridFee.toLocaleString()}
+                    </strong>
+
+
+                    <span>
+                        Happiness Index:
+                    </span>
+
+                    <strong style="color:#a855f7;">
+                        ${p.happiness} 😊
+                    </strong>
+
+
+                    <span>
+                        Accumulated Happiness:
+                    </span>
+
+                    <strong style="color:#a855f7;">
+                        ${p.accumulatedHappiness} pts
+                    </strong>
+
+
+                    ${
+                        happinessDeductions > 0
+                        ? `
+
+                        <span>
+                            Happiness Used:
+                        </span>
+
+                        <strong style="color:#a855f7;">
+                            -${happinessDeductions} 😊
+                        </strong>
+
+                        `
+                        : ""
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+
+    await showMessage(
+
+        `Round ${state.round} Settlement`,
+
+        settlementHTML,
+
+        "💰",
+
+        "Continue to Next Round"
+
+    );
+
+
+    if(!state.anyPurchases) {
+
+        state.stagnantCount += 1;
+
+
+        appendLog(
+            `No grid components bought this round. ` +
+            `Balanced system index counter: ` +
+            `${state.stagnantCount}/4.`
+        );
+
+    }
+
+    else {
+
+        state.stagnantCount = 0;
+
+    }
+
+
+    if(state.stagnantCount >= 4) {
+
+        forceEndGame("balanced");
+
+        return;
+
+    }
+
+
+    state.startingPlayerIdx =
+        (
+            state.startingPlayerIdx -
+            1 +
+            players.length
+        ) %
+        players.length;
+
+
+    state.round += 1;
+
+    state.anyPurchases = false;
+
+
+    players.forEach(
+        p=>{
+            p.finishedThisRound = false;
+        }
+    );
+
+
+    state.activePlayerIdx =
+        findNextUnfinishedPlayer(
+            state.startingPlayerIdx
+        );
+
+
+    updateUserInterface();
+
+}
+
+
+/* ============================================================
+   HOUSE DISPLAY
+   ============================================================ */
+
+function createHouseSlotHTML(
+    card,
+    cardType
+) {
+
+    if(!card) {
+
+        return `
+
+            <div class="house-slot">
+
+                <div class="house-empty">
+                    Empty
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    return `
+
+        <div class="
+            house-slot
+            ${
+                cardType === "goods"
+                    ? "occupied-goods"
+                    : "occupied-solar"
+            }">
+
+            <div class="house-slot-id">
+                ${
+                    cardType === "goods"
+                        ? "🛒"
+                        : "☀️"
+                }
+                ${card.id}
+            </div>
+
+            <div class="house-slot-details">
+
+                ${
+                    cardType === "goods"
+                        ? `⚡ ${Math.abs(card.electrons)}e use`
+                        : `⚡ +${card.electrons}e`
+                }
+
+                <br>
+
+                😊 +${card.happiness}
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function createHouseHTML(p) {
+
+    const goodsSlots = [];
+
+
+    for(let i=0;i<4;i++) {
+
+        goodsSlots.push(
+
+            createHouseSlotHTML(
+                p.goodsCards[i],
+                "goods"
+            )
+
+        );
+
+    }
+
+
+    const solarSlots = [];
+
+
+    for(let i=0;i<2;i++) {
+
+        solarSlots.push(
+
+            createHouseSlotHTML(
+                p.solarPanels[i],
+                "solar"
+            )
+
+        );
+
+    }
+
+
+    return `
+
+        <div class="house-section">
+
+            <div class="house-header">
+
+                <div class="house-title">
+                    🏠 ${p.name}'s House
+                </div>
+
+                <div class="house-capacity">
+                    ${getPlayerHouseCardCount(p)} / 6 occupied
+                </div>
+
+            </div>
+
+
+            <div class="house-category">
+
+                <div class="house-category-title">
+
+                    <span>
+                        🛒 Goods
+                    </span>
+
+                    <span>
+                        ${p.goodsCards.length} / 4
+                    </span>
+
+                </div>
+
+
+                <div class="house-slots">
+
+                    ${goodsSlots.join("")}
+
+                </div>
+
+            </div>
+
+
+            <div class="house-category">
+
+                <div class="house-category-title">
+
+                    <span>
+                        ☀️ Solar Panels
+                    </span>
+
+                    <span>
+                        ${p.solarPanels.length} / 2
+                    </span>
+
+                </div>
+
+
+                <div class="house-slots solar-slots">
+
+                    ${solarSlots.join("")}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ============================================================
+   USER INTERFACE
+   ============================================================ */
+
+function updateUserInterface() {
+
+    document.getElementById(
+        "dispRound"
+    ).innerText =
+        state.round;
+
+
+    document.getElementById(
+        "dispFees"
+    ).innerText =
+        `$${state.feePerRound} / round`;
+
+
+    const container =
+        document.getElementById(
+            "playerContainer"
+        );
+
+
+    container.innerHTML = "";
+
+
+    players.forEach((p,idx)=>{
+
+        const isCurrentTurn =
+            idx ===
+            state.activePlayerIdx;
+
+
+        const isFinished =
+            p.finishedThisRound;
+
+
+        const isSolarPanelLowCash =
+            state.solarPanelSpecialTurn &&
+            p.cash < 2000;
+
+
+        const card =
+            document.createElement("div");
+
+
+        card.className =
+            `player-card ${
+                isCurrentTurn &&
+                !isFinished &&
+                !isSolarPanelLowCash
+                    ? "active-turn"
+                    : ""
+            } ${
+                isFinished ||
+                isSolarPanelLowCash
+                    ? "finished-round"
+                    : ""
+            }`;
+
+
+        const detailsClass =
+            p.showDetails
+                ? ""
+                : "player-details-hidden";
+
+
+        const toggleText =
+            p.showDetails
+                ? "Hide Player Details"
+                : "Show Player Details";
+
+
+        let turnBadge;
+
+
+        if(
+            state.solarPanelSpecialTurn &&
+            isCurrentTurn
+        ) {
+
+            turnBadge = `
+
+                <span class="turn-badge active">
+                    ☀️ Solar Panel Turn
+                </span>
+
+            `;
+
+        }
+
+        else if(isFinished) {
+
+            turnBadge = `
+
+                <span class="turn-badge finished">
+                    ✓ Finished
+                </span>
+
+            `;
+
+        }
+
+        else if(isCurrentTurn) {
+
+            turnBadge = `
+
+                <span class="turn-badge active">
+                    Active Turn
+                </span>
+
+            `;
+
+        }
+
+        else {
+
+            turnBadge = `
+
+                <span class="turn-badge">
+                    Waiting
+                </span>
+
+            `;
+
+        }
+
+
+        let gameplayPanel;
+
+
+        if(
+            state.solarPanelSpecialTurn &&
+            isCurrentTurn
+        ) {
+
+            gameplayPanel = `
+
+                <div class="card-selection">
+
+                    <div class="modal-event success"
+                         style="margin-bottom:15px;">
+
+                        <strong>
+                            ☀️ Solar Panel-only Turn
+                        </strong>
+
+                        <br><br>
+
+                        This special turn is for purchasing
+                        Solar Panel cards only.
+
+                        <br><br>
+
+                        <span style="
+                            color:var(--text-muted);
+                            font-size:0.85rem;">
+
+                            ${
+                                p.solarPanels.length >= 2
+                                    ? "Your Solar Panel slots are full. Purchasing another panel requires discarding one of your current panels."
+                                    : "You have room for another Solar Panel in your house."
+                            }
+
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        class="no-purchase-button"
+                        onclick="noPurchase(${idx})">
+
+                        ⏭️ No Purchase This Turn -- Finish Round
+
+                    </button>
+
+
+                    <h4>
+                        ☀️ Choose a Solar Panel Card
+                    </h4>
+
+
+                    <div class="card-options">
+
+                        ${
+                            solarPanelCards.map(
+                                (c,i)=>`
+
+                                <button
+                                    class="game-card solar"
+
+                                    ${
+                                        c.quantity<=0 ||
+                                        p.cash<c.price
+                                            ? "disabled"
+                                            : ""
+                                    }
+
+                                    onclick="
+                                        buyCard(
+                                            ${idx},
+                                            'blue',
+                                            ${i}
+                                        )
+                                    ">
+
+                                    <div class="game-card-price">
+                                        $${c.price.toLocaleString()}
+                                    </div>
+
+                                    <div class="game-card-details">
+                                        ⚡ +${c.electrons}e<br>
+                                        😊 +${c.happiness}
+                                    </div>
+
+                                    <div class="card-count">
+
+                                        ${c.quantity}
+                                        card${
+                                            c.quantity===1
+                                                ? ""
+                                                : "s"
+                                        }
+                                        remaining
+
+                                    </div>
+
+                                </button>
+
+                            `
+                            ).join("")
+                        }
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+        else if(
+            isCurrentTurn &&
+            !isFinished
+        ) {
+
+            gameplayPanel = `
+
+                <div class="card-selection">
+
+                    <button
+                        class="no-purchase-button"
+                        onclick="noPurchase(${idx})"
+                        ${
+                            state.upgradeRequired
+                                ? "disabled"
+                                : ""
+                        }>
+
+                        ⏭️ No Purchase This Turn -- Finish Round
+
+                    </button>
+
+
+                    <h4>
+                        🛒 Choose a Goods Card
+                    </h4>
+
+
+                    <div class="card-options">
+
+                        ${
+                            goodsCards.map(
+                                (c,i)=>`
+
+                                <button
+                                    class="game-card goods"
+
+                                    ${
+                                        c.quantity<=0 ||
+                                        p.cash<c.price ||
+                                        state.upgradeRequired
+                                            ? "disabled"
+                                            : ""
+                                    }
+
+                                    onclick="
+                                        buyCard(
+                                            ${idx},
+                                            'yellow',
+                                            ${i}
+                                        )
+                                    ">
+
+                                    <div class="game-card-price">
+                                        $${c.price.toLocaleString()}
+                                    </div>
+
+                                    <div class="game-card-details">
+                                        ⚡ ${c.electrons}e<br>
+                                        😊 +${c.happiness}
+                                    </div>
+
+                                    <div class="card-count">
+
+                                        ${c.quantity}
+                                        card${
+                                            c.quantity===1
+                                                ? ""
+                                                : "s"
+                                        }
+                                        remaining
+
+                                    </div>
+
+                                </button>
+
+                            `
+                            ).join("")
+                        }
+
+                    </div>
+
+
+                    <h4 style="margin-top:20px;">
+                        ☀️ Choose a Solar Panel Card
+                    </h4>
+
+
+                    <div class="card-options">
+
+                        ${
+                            solarPanelCards.map(
+                                (c,i)=>`
+
+                                <button
+                                    class="game-card solar"
+
+                                    ${
+                                        c.quantity<=0 ||
+                                        p.cash<c.price ||
+                                        state.upgradeRequired
+                                            ? "disabled"
+                                            : ""
+                                    }
+
+                                    onclick="
+                                        buyCard(
+                                            ${idx},
+                                            'blue',
+                                            ${i}
+                                        )
+                                    ">
+
+                                    <div class="game-card-price">
+                                        $${c.price.toLocaleString()}
+                                    </div>
+
+                                    <div class="game-card-details">
+                                        ⚡ +${c.electrons}e<br>
+                                        😊 +${c.happiness}
+                                    </div>
+
+                                    <div class="card-count">
+
+                                        ${c.quantity}
+                                        card${
+                                            c.quantity===1
+                                                ? ""
+                                                : "s"
+                                        }
+                                        remaining
+
+                                    </div>
+
+                                </button>
+
+                            `
+                            ).join("")
+                        }
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+        else {
+
+            gameplayPanel = `
+
+                <div style="
+                    color:var(--text-muted);
+                    text-align:center;
+                    padding:15px;">
+
+                    ${
+                        state.solarPanelSpecialTurn
+
+                            ? (
+                                state.solarPanelEligiblePlayers
+                                    .includes(idx)
+
+                                    ? state.solarPanelCompletedPlayers
+                                        .includes(idx)
+
+                                        ? "✓ This player has completed their Solar Panel opportunity."
+
+                                        : "☀️ Waiting for this player's Solar Panel-only turn."
+
+                                    : "This player does not qualify for the Solar Panel-only turn."
+                              )
+
+                            : isFinished
+
+                                ? "✓ This player has finished for this round."
+
+                                : state.upgradeRequired
+
+                                    ? "Grid upgrade required before the next player can take their turn."
+
+                                    : state.activePlayerIdx === -1
+
+                                        ? "All players have finished this round."
+
+                                        : `Waiting for ${
+                                            players[
+                                                state.activePlayerIdx
+                                            ].name
+                                        } to complete their turn.`
+                    }
+
+                </div>
+
+            `;
+
+        }
+
+
+        const flexibleBillingSummary =
+            state.gamePolicy === "flexibleBilling"
+                ? `
+
+                <div class="payment-row">
+
+                    <span>
+                        Electricity Rate
+                    </span>
+
+                    <strong style="
+                        color:${
+                            state.electricityRate === 30
+                                ? "var(--warning)"
+                                : "var(--success)"
+                        };">
+
+                        $${state.electricityRate} / e
+
+                    </strong>
+
+                </div>
+
+                `
+                : "";
+
+
+        card.innerHTML = `
+
+            <div class="player-header">
+
+                <span class="player-title">
+                    🏠 ${p.name}
+                </span>
+
+                ${turnBadge}
+
+            </div>
+
+
+            ${createHouseHTML(p)}
+
+
+            <div class="payment-summary">
+
+                <div class="payment-summary-title">
+                    💰 Financial Summary
+                </div>
+
+
+                <div class="payment-row">
+
+                    <span>
+                        Pay Day
+                    </span>
+
+                    <strong style="
+                        color:var(--success);">
+
+                        +$${p.lastPayDay.toLocaleString()}
+
+                    </strong>
+
+                </div>
+
+
+                ${flexibleBillingSummary}
+
+
+                <div class="payment-row">
+
+                    <span>
+                        Utility Bill
+                    </span>
+
+                    <strong style="
+                        color:var(--danger);">
+
+                        -$${p.lastUtilityBill.toLocaleString()}
+
+                    </strong>
+
+                </div>
+
+
+                <div class="payment-row">
+
+                    <span>
+                        Grid Fee
+                    </span>
+
+                    <strong style="
+                        color:var(--danger);">
+
+                        -$${p.lastGridFee.toLocaleString()}
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            ${gameplayPanel}
+
+
+            <button
+                class="player-details-toggle"
+                onclick="togglePlayerDetails(${idx})">
+
+                ${toggleText}
+
+            </button>
+
+
+            <div class="${detailsClass}">
+
+                <table class="scorecard-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Wallet Cash
+                            </th>
+
+                            <th>
+                                e From Goods (-)
+                            </th>
+
+                            <th>
+                                e From Solar (+)
+                            </th>
+
+                            <th>
+                                Total Net e Balance
+                            </th>
+
+                            <th>
+                                Happiness Index
+                            </th>
+
+                            <th>
+                                Accumulated Happiness
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        <tr>
+
+                            <td style="
+                                color:var(--success);
+                                font-weight:bold;">
+
+                                $${p.cash.toLocaleString()}
+
+                            </td>
+
+
+                            <td style="
+                                color:var(--yellow-card);
+                                font-weight:bold;">
+
+                                ${p.goodsE} e
+
+                            </td>
+
+
+                            <td style="
+                                color:var(--blue-card);
+                                font-weight:bold;">
+
+                                ${p.solarE} e
+
+                            </td>
+
+
+                            <td style="
+                                font-weight:bold;
+                                color:${
+                                    p.netE>=0
+                                        ? "var(--success)"
+                                        : "var(--danger)"
+                                };">
+
+                                ${p.netE} e
+
+                            </td>
+
+
+                            <td style="
+                                color:#a855f7;
+                                font-weight:bold;">
+
+                                ${p.happiness} 😊
+
+                            </td>
+
+
+                            <td style="
+                                color:#a855f7;
+                                font-weight:bold;">
+
+                                ${p.accumulatedHappiness} 😊
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `;
+
+
+        container.appendChild(card);
+
+    });
+
+
+    if(state.upgradeRequired) {
+
+        document.getElementById(
+            "upgradeGridBtn"
+        ).style.display =
+            "block";
+
+    }
+
+
+    if(state.solarPanelSpecialTurn) {
+
+        const currentSolarPlayer =
+            players[
+                state.activePlayerIdx
+            ];
+
+
+        document.getElementById(
+            "turnTrackingText"
+        ).innerText =
+            currentSolarPlayer
+                ? `☀️ Solar Panel-only turn: ${currentSolarPlayer.name}`
+                : "☀️ Solar Panel-only turn active.";
+
+    }
+
+    else if(allPlayersFinished()) {
+
+        document.getElementById(
+            "turnTrackingText"
+        ).innerText =
+            `All players have finished Round ${state.round}. Pay Day is ready.`;
+
+    }
+
+    else if(state.activePlayerIdx !== -1) {
+
+        document.getElementById(
+            "turnTrackingText"
+        ).innerText =
+            `Current turn belongs to: ${
+                players[
+                    state.activePlayerIdx
+                ].name
+            }`;
+
+    }
+
+    else {
+
+        document.getElementById(
+            "turnTrackingText"
+        ).innerText =
+            "No active player.";
+
+    }
+
+}
+
+
+/* ============================================================
+   END GAME
+   ============================================================ */
+
+function forceEndGame(condition) {
+
+    state.solarPanelSpecialTurn = false;
+
+    state.solarPanelEligiblePlayers = [];
+
+    state.solarPanelCompletedPlayers = [];
+
+    state.solarPanelTurnIndex = 0;
+
+    state.normalTurnReturnIndex = -1;
+
+    state.solarPanelPurchasedDuringOpportunity = false;
+
+
+    document.getElementById(
+        "managerView"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "endView"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "gridDashboard"
+    ).style.display =
+        "none";
+
+
+    const heading =
+        document.getElementById(
+            "endReasonTitle"
+        );
+
+
+    const subText =
+        document.getElementById(
+            "neighborhoodSharedScore"
+        );
+
+
+    let groupAccumulatedHappiness = 0;
+
+
+    players.forEach(p=>{
+
+        groupAccumulatedHappiness +=
+            p.accumulatedHappiness;
+
+    });
+
+
+    if(condition === "blackout") {
+
+        heading.innerText =
+            "🚨 CRITICAL GRID FAILURE: BLACKOUT OCCURRED";
+
+        heading.style.color =
+            "var(--danger)";
+
+
+        const finalGroupScore =
+            groupAccumulatedHappiness - 50;
+
+
+        subText.innerHTML = `
+
+            Neighborhood baseline penalized -50
+            due to system blackout failure.
+
+            <br><br>
+
+            <strong>
+                Combined Neighborhood Score:
+                ${finalGroupScore}
+                Accumulated Happiness Points
+            </strong>
+
+        `;
+
+    }
+
+
+    else if(condition === "balanced") {
+
+        heading.innerText =
+            "⚖️ BALANCED GRID STABILIZATION ACHIEVED";
+
+        heading.style.color =
+            "var(--success)";
+
+
+        subText.innerHTML = `
+
+            No components acquired for 4 consecutive rounds.
+            Network parameters stabilized perfectly.
+
+            <br><br>
+
+            <strong>
+                Combined Neighborhood Score:
+                ${groupAccumulatedHappiness}
+                Accumulated Happiness Points
+            </strong>
+
+        `;
+
+    }
+
+
+    else {
+
+        heading.innerText =
+            "🏁 GAME COMPLETED: TIME LIMIT CONCLUDED";
+
+        heading.style.color =
+            "var(--primary)";
+
+
+        subText.innerHTML = `
+
+            Operational time constraints reached.
+
+            <br><br>
+
+            <strong>
+                Combined Neighborhood Score:
+                ${groupAccumulatedHappiness}
+                Accumulated Happiness Points
+            </strong>
+
+        `;
+
+    }
+
+
+    const podium =
+        document.getElementById(
+            "finalScoreboardPodium"
+        );
+
+
+    podium.innerHTML = "";
+
+
+    const ranked =
+        [...players].sort(
+            (a,b)=>
+                b.accumulatedHappiness -
+                a.accumulatedHappiness
+        );
+
+
+    ranked.forEach((p,i)=>{
+
+        const row =
+            document.createElement("div");
+
+
+        row.style.padding = "12px";
+
+        row.style.background = "#0f172a";
+
+        row.style.border =
+            "1px solid var(--border)";
+
+        row.style.marginBottom = "8px";
+
+        row.style.borderRadius = "6px";
+
+
+        row.innerHTML = `
+
+            <strong>
+                #${i+1} ${p.name}
+            </strong>
+
+            &mdash;
+
+            Accumulated Happiness Score:
+
+            <span style="
+                color:#a855f7;
+                font-weight:bold;">
+
+                ${p.accumulatedHappiness} pts
+
+            </span>
+
+            <br>
+
+            Current Happiness Index:
+
+            <span style="
+                color:#a855f7;
+                font-weight:bold;">
+
+                ${p.happiness} pts
+
+            </span>
+
+            |
+
+            Final Liquidity Wallet:
+
+            $${p.cash.toLocaleString()}
+
+        `;
+
+
+        podium.appendChild(row);
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>
