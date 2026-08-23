@@ -418,6 +418,27 @@ button.action-btn:hover {
 }
 
 
+.policy-option-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+
+.policy-option-grid .mode-button {
+
+    min-width: 0;
+
+    width: 100%;
+}
+
+
 .random-info {
 
     background: #172554;
@@ -1561,6 +1582,10 @@ button.action-btn:hover {
         min-width: 0;
     }
 
+    .policy-option-grid {
+        grid-template-columns: 1fr;
+    }
+
     .scorecard-table {
         font-size: 0.75rem;
     }
@@ -1884,17 +1909,28 @@ may be active at the same time.
 </p>
 
 
-<div class="mode-buttons">
+<!-- NO POLICIES -->
+
+<div style="margin-top:15px;">
 
 <button
 id="noPoliciesButton"
 class="mode-button selected"
-onclick="setNoPolicies()">
+onclick="setNoPolicies()"
+style="
+width:100%;
+max-width:none;">
 
 🚫 No Policies
 
 </button>
 
+</div>
+
+
+<!-- FOUR SELECTABLE POLICIES -->
+
+<div class="policy-option-grid">
 
 <button
 id="systemFinesPolicyButton"
@@ -2463,10 +2499,6 @@ let state = {
 
     serviceDisconnectionEnabled:false,
 
-    /*
-     * Dynamic policy-design settings.
-     */
-
     systemFineRate:50,
 
     normalElectricityRate:20,
@@ -2817,10 +2849,20 @@ function initializePolicyRefinementOptions() {
     systemFineRateInput.innerHTML = "";
 
 
+    /*
+     * System Fine options now use $25 increments.
+     *
+     * Available:
+     * $25, $50, $75, $100,
+     * $125, $150, $175, $200.
+     *
+     * $50 remains the default.
+     */
+
     for(
-        let amount=10;
+        let amount=25;
         amount<=200;
-        amount+=10
+        amount+=25
     ) {
 
         const option =
@@ -3746,10 +3788,6 @@ async function commenceGridSimulation() {
     }
 
 
-    /*
-     * Save all selected policies.
-     */
-
     state.systemFinesEnabled =
         selectedGamePolicies.systemFines;
 
@@ -3765,10 +3803,6 @@ async function commenceGridSimulation() {
     state.serviceDisconnectionEnabled =
         selectedGamePolicies.serviceDisconnection;
 
-
-    /*
-     * Save all dynamic policy-design settings.
-     */
 
     state.systemFineRate =
         parseInt(
@@ -4297,11 +4331,6 @@ async function promptSystemUpdateForPurchase(
         );
 
 
-    /*
-     * Purchases that do not increase demand
-     * receive no warning.
-     */
-
     if(
         projectedLoad <=
         currentLoad
@@ -4323,15 +4352,6 @@ async function promptSystemUpdateForPurchase(
 
     let confirmClass =
         "warning";
-
-
-    /*
-     * MOST SEVERE APPLICABLE ENABLED WARNING:
-     *
-     * 1. Brownout / Blackout
-     * 2. Within 5e
-     * 3. Within 10e
-     */
 
 
     if(
@@ -4964,10 +4984,6 @@ async function disconnectPlayerService(
     }
 
 
-    /*
-     * Finalize accumulated happiness at end of turn.
-     */
-
     p.accumulatedHappiness +=
         p.happiness;
 
@@ -4979,11 +4995,6 @@ async function disconnectPlayerService(
     p.disconnectedRound =
         state.round;
 
-
-    /*
-     * Permanently remove every owned card.
-     * Quantities are NOT restored.
-     */
 
     p.goodsCards.forEach(card=>{
 
@@ -5754,10 +5765,6 @@ async function buyCard(
     }
 
 
-    /*
-     * Commit discard only after all confirmations.
-     */
-
     if(
         collection.length >=
         houseCapacity
@@ -5857,10 +5864,6 @@ async function buyCard(
             if(
                 state.systemFinesEnabled
             ) {
-
-                /*
-                 * Dynamic System Fine.
-                 */
 
                 fineAmount =
                     excess *
@@ -5990,10 +5993,6 @@ async function buyCard(
             `${p.name} purchased Solar Panel ${card.id}.`
         );
 
-
-        /*
-         * Solar purchase resets Flexible Billing.
-         */
 
         if(
             state.flexibleBillingEnabled
@@ -6519,10 +6518,6 @@ async function applyGridUpgrade() {
         false;
 
 
-    /*
-     * Capacity expansion resets flexible billing.
-     */
-
     if(
         state.flexibleBillingEnabled
     ) {
@@ -6709,10 +6704,6 @@ async function executeRoundEndPayments() {
         );
 
 
-    /*
-     * Disconnected players are intentionally excluded.
-     */
-
     activePlayers.forEach(p=>{
 
         p.accumulatedHappiness +=
@@ -6731,10 +6722,6 @@ async function executeRoundEndPayments() {
             500;
 
 
-        /*
-         * Dynamic Flexible Billing rate.
-         */
-
         const utilityRate =
             state.flexibleBillingEnabled
                 ? state.electricityRate
@@ -6749,10 +6736,6 @@ async function executeRoundEndPayments() {
                   utilityRate
                 : 0;
 
-
-        /*
-         * Surplus income stays fixed at $20/e.
-         */
 
         const surplusPayment =
             p.netE > 0
