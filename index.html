@@ -540,6 +540,16 @@ button.action-btn:hover {
 }
 
 
+.player-card.disconnected {
+
+    opacity: 0.65;
+
+    border-color: var(--danger);
+
+    background: #251923;
+}
+
+
 .player-header {
 
     display: flex;
@@ -589,6 +599,16 @@ button.action-btn:hover {
     background: var(--success);
 
     color: #0b0f19;
+
+    font-weight: bold;
+}
+
+
+.turn-badge.disconnected {
+
+    background: var(--danger);
+
+    color: white;
 
     font-weight: bold;
 }
@@ -1797,6 +1817,16 @@ onclick="toggleGamePolicy('systemUpdates')">
 
 </button>
 
+
+<button
+id="serviceDisconnectionPolicyButton"
+class="mode-button"
+onclick="toggleGamePolicy('serviceDisconnection')">
+
+🔌 Service Disconnection
+
+</button>
+
 </div>
 
 
@@ -1809,8 +1839,7 @@ color:var(--text-muted);">
 
 <br><br>
 
-System Fines, Flexible Billing, and System Updates
-may be selected individually or in any combination.
+Policies may be selected individually or in any combination.
 
 </div>
 
@@ -2121,11 +2150,15 @@ let state = {
 
     systemUpdatesEnabled:false,
 
+    serviceDisconnectionEnabled:false,
+
     electricityRate:20,
 
     highDemandActive:false,
 
     landfill:[],
+
+    removedFromPlay:[],
 
     solarPanelSpecialTurn:false,
 
@@ -2513,7 +2546,7 @@ function evaluateFlexibleBilling(
 
 
 /* ============================================================
-   SYSTEM UPDATE HELPERS
+   SYSTEM LOAD HELPERS
    ============================================================ */
 
 function getCurrentSystemLoad() {
@@ -2522,6 +2555,13 @@ function getCurrentSystemLoad() {
 
 
     players.forEach(p=>{
+
+        if(p.disconnected) {
+
+            return;
+
+        }
+
 
         currentLoad += p.goodsE;
 
@@ -2598,6 +2638,10 @@ function getProjectedSystemLoad(
 }
 
 
+/* ============================================================
+   SYSTEM UPDATES FOR CUSTOMERS
+   ============================================================ */
+
 async function promptSystemUpdateForPurchase(
     p,
     cardType,
@@ -2627,22 +2671,12 @@ async function promptSystemUpdateForPurchase(
         );
 
 
-    /*
-     * System Updates are intended to warn players when
-     * their purchase increases pressure on the grid.
-     *
-     * A purchase that lowers or leaves demand unchanged
-     * does not generate an alert.
-     */
-
     if(projectedLoad <= currentLoad) {
 
         return true;
 
     }
 
-
-    let warningType = null;
 
     let title = "";
 
@@ -2652,16 +2686,6 @@ async function promptSystemUpdateForPurchase(
 
     let confirmClass = "warning";
 
-
-    /*
-     * Only the most severe applicable warning is shown.
-     *
-     * Priority:
-     * 1. Blackout
-     * 2. Brownout
-     * 3. Within 5e
-     * 4. Within 10e
-     */
 
     if(projectedLoad > state.capacity) {
 
@@ -2673,8 +2697,6 @@ async function promptSystemUpdateForPurchase(
             projectedBrownoutNumber >=
             state.brownoutLimit
         ) {
-
-            warningType = "blackout";
 
             title =
                 "🚨 System Update: Blackout Warning";
@@ -2728,10 +2750,24 @@ async function promptSystemUpdateForPurchase(
 
                     <br><br>
 
-                    Because the neighborhood's blackout limit
-                    is ${state.brownoutLimit}, completing this
-                    purchase will cause a
+                    Completing this purchase will cause a
                     <strong>system blackout and end the game</strong>.
+
+                    ${
+                        state.serviceDisconnectionEnabled
+                            ? `
+
+                            <br><br>
+
+                            <strong style="color:var(--danger);">
+                                Service Disconnection is active.
+                                Your electrical service will also
+                                be disconnected and your score finalized.
+                            </strong>
+
+                            `
+                            : ""
+                    }
 
                     <br><br>
 
@@ -2744,8 +2780,6 @@ async function promptSystemUpdateForPurchase(
         }
 
         else {
-
-            warningType = "brownout";
 
             title =
                 "⚠️ System Update: Brownout Warning";
@@ -2797,10 +2831,23 @@ async function promptSystemUpdateForPurchase(
                     Completing the purchase will trigger
                     <strong>
                         Brownout ${projectedBrownoutNumber}
-                    </strong>
+                    </strong>.
 
-                    and require the neighborhood to address
-                    grid capacity before normal play continues.
+                    ${
+                        state.serviceDisconnectionEnabled
+                            ? `
+
+                            <br><br>
+
+                            <strong style="color:var(--danger);">
+                                Service Disconnection is active.
+                                Your electrical service will be
+                                disconnected and your score finalized.
+                            </strong>
+
+                            `
+                            : ""
+                    }
 
                     <br><br>
 
@@ -2818,8 +2865,6 @@ async function promptSystemUpdateForPurchase(
         projectedLoad >=
         state.capacity - 5
     ) {
-
-        warningType = "within5";
 
         title =
             "⚠️ System Update: High Grid Demand";
@@ -2883,8 +2928,6 @@ async function promptSystemUpdateForPurchase(
         state.capacity - 10
     ) {
 
-        warningType = "within10";
-
         title =
             "📢 System Update: Grid Capacity Notice";
 
@@ -2943,7 +2986,7 @@ async function promptSystemUpdateForPurchase(
     }
 
 
-    if(!warningType) {
+    if(!message) {
 
         return true;
 
@@ -2997,6 +3040,287 @@ async function promptSystemUpdateForPurchase(
 
 
     return true;
+
+}
+
+
+/* ============================================================
+   SERVICE DISCONNECTION
+   ============================================================ */
+
+async function disconnectPlayerService(
+    pIdx,
+    eventType
+) {
+
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        p.disconnected
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Finalize this player's score immediately.
+     * The player will be excluded from future round-end
+     * Happiness accumulation.
+     */
+
+    p.accumulatedHappiness +=
+        p.happiness;
+
+
+    p.scoreFinalized = true;
+
+    p.disconnectedRound =
+        state.round;
+
+
+    appendLog(
+        `🔌 ${p.name}'s service was disconnected after causing a ${eventType}.`
+    );
+
+
+    appendLog(
+        `🏁 ${p.name}'s score was finalized at ` +
+        `${p.accumulatedHappiness} Accumulated Happiness Point(s).`
+    );
+
+
+    /*
+     * Permanently remove all cards from play.
+     * Quantities are NOT restored to the neighborhood decks.
+     */
+
+    p.goodsCards.forEach(card=>{
+
+        state.removedFromPlay.push({
+
+            ...card,
+
+            originalOwner:p.name,
+
+            removedRound:state.round,
+
+            removedType:"goods",
+
+            reason:"Service Disconnection"
+
+        });
+
+    });
+
+
+    p.solarPanels.forEach(card=>{
+
+        state.removedFromPlay.push({
+
+            ...card,
+
+            originalOwner:p.name,
+
+            removedRound:state.round,
+
+            removedType:"solar",
+
+            reason:"Service Disconnection"
+
+        });
+
+    });
+
+
+    const removedGoodsCount =
+        p.goodsCards.length;
+
+
+    const removedSolarCount =
+        p.solarPanels.length;
+
+
+    p.goodsCards = [];
+
+    p.solarPanels = [];
+
+
+    /*
+     * Immediately remove all demand and generation
+     * associated with the disconnected customer.
+     */
+
+    p.goodsE = 0;
+
+    p.solarE = 0;
+
+    p.netE = 0;
+
+
+    p.disconnected = true;
+
+    p.finishedThisRound = true;
+
+
+    appendLog(
+        `🔌 ${p.name}'s ${removedGoodsCount} Goods card(s) and ` +
+        `${removedSolarCount} Solar Panel card(s) were permanently removed from play.`
+    );
+
+
+    appendLog(
+        `⚡ ${p.name}'s electricity demand and Solar generation were removed from the grid.`
+    );
+
+
+    /*
+     * Remove this player from any Solar Panel special-turn
+     * collections.
+     */
+
+    state.solarPanelEligiblePlayers =
+        state.solarPanelEligiblePlayers.filter(
+            idx=>idx !== pIdx
+        );
+
+
+    state.solarPanelCompletedPlayers =
+        state.solarPanelCompletedPlayers.filter(
+            idx=>idx !== pIdx
+        );
+
+
+    /*
+     * Move turn control to the next active customer.
+     */
+
+    if(state.activePlayerIdx === pIdx) {
+
+        state.activePlayerIdx =
+            findNextUnfinishedPlayer(
+                (
+                    pIdx + 1
+                ) %
+                players.length
+            );
+
+    }
+
+
+    evaluateSystemDemand(false);
+
+    updateUserInterface();
+
+
+    await showMessage(
+
+        "🔌 Service Disconnected",
+
+        `
+
+        <div class="modal-event danger">
+
+            <strong>
+                ${p.name}'s electrical service has been disconnected.
+            </strong>
+
+            <br><br>
+
+            The customer caused a
+            <strong>${eventType}</strong>.
+
+        </div>
+
+
+        <div class="modal-financial-grid">
+
+            <div class="modal-financial-item">
+
+                <div class="modal-financial-label">
+                    Finalized Score
+                </div>
+
+                <div class="modal-financial-value"
+                     style="color:#a855f7;">
+
+                    ${p.accumulatedHappiness} pts
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-financial-item">
+
+                <div class="modal-financial-label">
+                    Service Status
+                </div>
+
+                <div class="modal-financial-value"
+                     style="color:var(--danger);">
+
+                    Disconnected
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div style="
+            margin-top:15px;
+            color:var(--text-muted);
+            font-size:0.85rem;">
+
+            This customer has been removed from future gameplay.
+
+            <br><br>
+
+            Their Goods cards and Solar Panels have been
+            permanently removed from play and cannot be purchased
+            by another player.
+
+            <br><br>
+
+            Their electricity demand and Solar generation have
+            also been removed from the neighborhood grid.
+
+            <br><br>
+
+            They will receive no further turns, Pay Days,
+            utility bills, grid fees, Solar Panel opportunities,
+            or Happiness accumulation.
+
+        </div>
+
+        `,
+
+        "🔌",
+
+        "Continue"
+
+    );
+
+
+    const activePlayers =
+        players.filter(
+            player=>!player.disconnected
+        );
+
+
+    if(activePlayers.length === 0) {
+
+        forceEndGame(
+            "allDisconnected"
+        );
+
+    }
 
 }
 
@@ -3285,18 +3609,6 @@ async function chooseHouseCardToDiscard(
 
             </div>
 
-
-            <div style="
-                margin-top:12px;
-                color:var(--success);
-                font-size:0.85rem;">
-
-                🗑️ The discarded card will return to the
-                neighborhood board and can be purchased again
-                by another player.
-
-            </div>
-
         `,
 
         buttons
@@ -3318,7 +3630,8 @@ async function promptFinishRound(pIdx) {
 
     if(
         !p ||
-        p.finishedThisRound
+        p.finishedThisRound ||
+        p.disconnected
     ) {
 
         return;
@@ -3436,7 +3749,7 @@ async function promptRoundSettlement() {
                 <div class="modal-event success">
 
                     <strong>
-                        🏁 All players have finished Round ${state.round}.
+                        🏁 All active players have finished Round ${state.round}.
                     </strong>
 
                     <br><br>
@@ -3459,7 +3772,7 @@ async function promptRoundSettlement() {
                         padding-left:20px;">
 
                         <li>
-                            Record each player's current Happiness Index
+                            Record each active player's current Happiness Index
                             toward their Accumulated Happiness.
                         </li>
 
@@ -3483,8 +3796,8 @@ async function promptRoundSettlement() {
 
                     </ul>
 
-                    Once processed, the neighborhood will
-                    advance to the next round.
+                    Disconnected customers are excluded
+                    from all future financial settlements.
 
                 </div>
 
@@ -3573,7 +3886,9 @@ let selectedGamePolicies = {
 
     flexibleBilling:false,
 
-    systemUpdates:false
+    systemUpdates:false,
+
+    serviceDisconnection:false
 
 };
 
@@ -3600,11 +3915,17 @@ function updateGamePolicyButtons() {
             "systemUpdatesPolicyButton"
         );
 
+    const serviceDisconnectionButton =
+        document.getElementById(
+            "serviceDisconnectionPolicyButton"
+        );
+
 
     const noPoliciesActive =
         !selectedGamePolicies.systemFines &&
         !selectedGamePolicies.flexibleBilling &&
-        !selectedGamePolicies.systemUpdates;
+        !selectedGamePolicies.systemUpdates &&
+        !selectedGamePolicies.serviceDisconnection;
 
 
     noPoliciesButton.classList.toggle(
@@ -3630,6 +3951,12 @@ function updateGamePolicyButtons() {
         selectedGamePolicies.systemUpdates
     );
 
+
+    serviceDisconnectionButton.classList.toggle(
+        "selected",
+        selectedGamePolicies.serviceDisconnection
+    );
+
 }
 
 
@@ -3642,6 +3969,9 @@ function setNoPolicies() {
         false;
 
     selectedGamePolicies.systemUpdates =
+        false;
+
+    selectedGamePolicies.serviceDisconnection =
         false;
 
 
@@ -3670,6 +4000,13 @@ function toggleGamePolicy(policy) {
 
         selectedGamePolicies.systemUpdates =
             !selectedGamePolicies.systemUpdates;
+
+    }
+
+    else if(policy === "serviceDisconnection") {
+
+        selectedGamePolicies.serviceDisconnection =
+            !selectedGamePolicies.serviceDisconnection;
 
     }
 
@@ -3867,7 +4204,13 @@ async function registerNeighbor() {
 
         lastGridFee:0,
 
-        finishedThisRound:false
+        finishedThisRound:false,
+
+        disconnected:false,
+
+        disconnectedRound:null,
+
+        scoreFinalized:false
 
     });
 
@@ -3914,6 +4257,7 @@ function findNextUnfinishedPlayer(startIndex) {
 
 
         if(
+            !players[idx].disconnected &&
             !players[idx].finishedThisRound
         ) {
 
@@ -3935,14 +4279,20 @@ function findNextUnfinishedPlayer(startIndex) {
 
 function allPlayersFinished() {
 
-    if(players.length === 0) {
+    const activePlayers =
+        players.filter(
+            p=>!p.disconnected
+        );
+
+
+    if(activePlayers.length === 0) {
 
         return false;
 
     }
 
 
-    return players.every(
+    return activePlayers.every(
         p=>p.finishedThisRound
     );
 
@@ -3959,7 +4309,11 @@ function finishPlayerRound(pIdx) {
         players[pIdx];
 
 
-    if(!p || p.finishedThisRound) {
+    if(
+        !p ||
+        p.finishedThisRound ||
+        p.disconnected
+    ) {
 
         return;
 
@@ -3991,7 +4345,10 @@ function finishPlayerRound(pIdx) {
         state.activePlayerIdx === -1 ||
         players[
             state.activePlayerIdx
-        ]?.finishedThisRound
+        ]?.finishedThisRound ||
+        players[
+            state.activePlayerIdx
+        ]?.disconnected
     ) {
 
         state.activePlayerIdx =
@@ -4005,7 +4362,7 @@ function finishPlayerRound(pIdx) {
         state.activePlayerIdx = -1;
 
         appendLog(
-            `All players have finished Round ${state.round}. Pay Day is now available.`
+            `All active players have finished Round ${state.round}. Pay Day is now available.`
         );
 
     }
@@ -4214,6 +4571,10 @@ async function commenceGridSimulation() {
         selectedGamePolicies.systemUpdates;
 
 
+    state.serviceDisconnectionEnabled =
+        selectedGamePolicies.serviceDisconnection;
+
+
     state.electricityRate = 20;
 
     state.highDemandActive = false;
@@ -4283,7 +4644,8 @@ async function commenceGridSimulation() {
     if(
         !state.systemFinesEnabled &&
         !state.flexibleBillingEnabled &&
-        !state.systemUpdatesEnabled
+        !state.systemUpdatesEnabled &&
+        !state.serviceDisconnectionEnabled
     ) {
 
         appendLog(
@@ -4324,33 +4686,20 @@ async function commenceGridSimulation() {
         }
 
 
+        if(state.serviceDisconnectionEnabled) {
+
+            activePolicies.push(
+                "Service Disconnection"
+            );
+
+        }
+
+
         appendLog(
             `Game Policies Active: ${
                 activePolicies.join(" + ")
             }.`
         );
-
-
-        if(state.flexibleBillingEnabled) {
-
-            appendLog(
-                "Flexible Billing: Utility electricity costs $20/e normally " +
-                "and rises to $30/e when neighborhood demand comes within " +
-                "10e of grid capacity."
-            );
-
-        }
-
-
-        if(state.systemUpdatesEnabled) {
-
-            appendLog(
-                "System Updates for Customers: Players will receive a warning " +
-                "before purchases that increase demand to within 10e or 5e " +
-                "of capacity, or would cause a brownout or blackout."
-            );
-
-        }
 
     }
 
@@ -4365,14 +4714,6 @@ async function commenceGridSimulation() {
             `Capacity additions after brownouts: ${
                 state.capacityAdditions.join(", ")
             }e.`
-        );
-
-    }
-
-    else {
-
-        appendLog(
-            "Grid parameters randomized and hidden from players."
         );
 
     }
@@ -4404,16 +4745,6 @@ function evaluateSystemDemand(
             "dispDemand"
         ).style.color =
             "var(--danger)";
-
-
-        if(state.upgradeRequired) {
-
-            document.getElementById(
-                "upgradeGridBtn"
-            ).style.display =
-                "block";
-
-        }
 
     }
 
@@ -4451,12 +4782,15 @@ function getSolarPanelEligiblePlayers() {
 
                 playerIndex:index,
 
-                cash:p.cash
+                cash:p.cash,
+
+                disconnected:p.disconnected
 
             };
 
         })
         .filter(entry =>
+            !entry.disconnected &&
             entry.cash >= 2000
         );
 
@@ -4501,7 +4835,6 @@ async function startSolarPanelOnlyTurns() {
 
     state.solarPanelCompletedPlayers = [];
 
-
     state.solarPanelTurnIndex = 0;
 
     state.solarPanelSpecialTurn = true;
@@ -4509,88 +4842,26 @@ async function startSolarPanelOnlyTurns() {
     state.solarPanelPurchasedDuringOpportunity = false;
 
 
-    appendLog(
-        `☀️ Solar Panel special turn activated. ` +
-        `${state.solarPanelEligiblePlayers.length} eligible player(s) ` +
-        `will receive a Solar Panel-only turn.`
-    );
-
-
     state.activePlayerIdx =
-        state.solarPanelEligiblePlayers[
-            state.solarPanelTurnIndex
-        ];
+        state.solarPanelEligiblePlayers[0];
 
 
     updateUserInterface();
 
 
     await showMessage(
-
         "☀️ Solar Panel Purchase Opportunity",
-
         `
-
         <div class="modal-event success">
-
-            <strong>
-                Solar Panel purchasing is now available.
-            </strong>
-
+            <strong>Solar Panel purchasing is now available.</strong>
             <br><br>
-
-            Every player with
+            Every active player with
             <strong>$2,000 or more in Wallet Cash</strong>
             will receive one special Solar Panel-only turn.
-
         </div>
-
-
-        <div style="
-            margin-top:15px;
-            color:var(--text-muted);
-            font-size:0.85rem;">
-
-            During these special turns:
-
-            <ul style="
-                margin-top:8px;
-                padding-left:20px;">
-
-                <li>
-                    Only Solar Panel cards may be purchased.
-                </li>
-
-                <li>
-                    Goods cards are temporarily removed from the gameplay panel.
-                </li>
-
-                <li>
-                    If a player's two Solar Panel house slots
-                    are full, they must discard one before
-                    purchasing another.
-                </li>
-
-                <li>
-                    Each eligible player may choose
-                    <strong>No Purchase This Turn -- Finish Round</strong>.
-                </li>
-
-                <li>
-                    The special round continues until
-                    <strong>every eligible player</strong> has made their choice.
-                </li>
-
-            </ul>
-
-        </div>
-
         `,
-
         "☀️",
-
         "Begin Solar Panel Turns"
-
     );
 
 }
@@ -4615,6 +4886,7 @@ async function advanceSolarPanelTurn() {
 
     if(
         completedPlayerIdx !== -1 &&
+        !players[completedPlayerIdx]?.disconnected &&
         state.solarPanelEligiblePlayers.includes(
             completedPlayerIdx
         ) &&
@@ -4633,6 +4905,7 @@ async function advanceSolarPanelTurn() {
     const nextEligiblePlayer =
         state.solarPanelEligiblePlayers.find(
             playerIndex =>
+                !players[playerIndex]?.disconnected &&
                 !state.solarPanelCompletedPlayers.includes(
                     playerIndex
                 )
@@ -4641,16 +4914,8 @@ async function advanceSolarPanelTurn() {
 
     if(nextEligiblePlayer !== undefined) {
 
-        state.solarPanelTurnIndex += 1;
-
         state.activePlayerIdx =
             nextEligiblePlayer;
-
-
-        appendLog(
-            `☀️ ${players[nextEligiblePlayer].name} is now taking their Solar Panel-only turn.`
-        );
-
 
         updateUserInterface();
 
@@ -4683,28 +4948,13 @@ async function advanceSolarPanelTurn() {
         returnIndex;
 
 
-    appendLog(
-        `☀️ Solar Panel special round complete. ` +
-        `All eligible players have completed their Solar Panel opportunity. ` +
-        `Returning to normal gameplay.`
-    );
-
-
     if(solarPanelWasPurchased) {
 
         state.upgradeRequired = false;
 
-
         document.getElementById(
             "upgradeGridBtn"
-        ).style.display =
-            "none";
-
-
-        appendLog(
-            `☀️ Solar Panel purchased during the special opportunity. ` +
-            `Grid Capacity Upgrade skipped. Normal gameplay resumes.`
-        );
+        ).style.display = "none";
 
 
         let startingPoint =
@@ -4728,25 +4978,9 @@ async function advanceSolarPanelTurn() {
 
         updateUserInterface();
 
-
-        if(state.activePlayerIdx !== -1) {
-
-            const currentPlayerIdx =
-                state.activePlayerIdx;
-
-            await promptFinishRound(
-                currentPlayerIdx
-            );
-
-        }
-
-
         return;
 
     }
-
-
-    updateUserInterface();
 
 
     if(state.upgradeRequired) {
@@ -4754,9 +4988,6 @@ async function advanceSolarPanelTurn() {
         await applyGridUpgrade();
 
     }
-
-
-    return;
 
 }
 
@@ -4767,22 +4998,25 @@ async function advanceSolarPanelTurn() {
 
 async function noPurchase(pIdx) {
 
+    const p =
+        players[pIdx];
+
+
+    if(
+        !p ||
+        p.disconnected
+    ) {
+
+        return;
+
+    }
+
+
     if(state.solarPanelSpecialTurn) {
 
         if(
             pIdx !== state.activePlayerIdx
         ) {
-
-            return;
-
-        }
-
-
-        const p =
-            players[pIdx];
-
-
-        if(!p) {
 
             return;
 
@@ -4803,31 +5037,9 @@ async function noPurchase(pIdx) {
 
     if(state.upgradeRequired) {
 
-        await showMessage(
-            "Grid Upgrade Required",
-            "The grid must be upgraded before the next player can complete their turn.",
-            "🔧"
-        );
-
         return;
 
     }
-
-
-    const p =
-        players[pIdx];
-
-
-    if(!p || p.finishedThisRound) {
-
-        return;
-
-    }
-
-
-    appendLog(
-        `${p.name} chose not to purchase a card this turn.`
-    );
 
 
     finishPlayerRound(pIdx);
@@ -4845,7 +5057,10 @@ function collectPayment(
     paymentName
 ) {
 
-    if(amount <= 0) {
+    if(
+        amount <= 0 ||
+        player.disconnected
+    ) {
 
         return {
 
@@ -4860,13 +5075,9 @@ function collectPayment(
     }
 
 
-    const cashAvailable =
-        Math.max(0,player.cash);
-
-
     const cashPaid =
         Math.min(
-            cashAvailable,
+            Math.max(0,player.cash),
             amount
         );
 
@@ -4891,26 +5102,6 @@ function collectPayment(
 
         player.happiness -=
             happinessUsed;
-
-    }
-
-
-    if(cashPaid > 0) {
-
-        appendLog(
-            `${player.name} paid $${cashPaid.toLocaleString()} toward ${paymentName}.`
-        );
-
-    }
-
-
-    if(happinessUsed > 0) {
-
-        appendLog(
-            `💔 ${player.name} could not fully pay ${paymentName}. ` +
-            `${happinessUsed} Happiness Point(s) were deducted ` +
-            `to cover the remaining $${remaining.toLocaleString()}.`
-        );
 
     }
 
@@ -4988,89 +5179,31 @@ async function showBrownoutEvent(
 
             </div>
 
-
-            <div style="
-                margin-top:15px;
-                color:var(--text-muted);
-                font-size:0.85rem;">
-
-                If the player cannot cover the
-                entire fine, the remaining amount is converted
-                into Happiness Points at a rate of
-                <strong>$50 per point</strong>, rounded up.
-
-            </div>
-
-        `;
-
-    }
-
-    else {
-
-        financialSection += `
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        System Fine
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:var(--success);">
-
-                        None
-
-                    </div>
-
-                </div>
-
-            </div>
-
         `;
 
     }
 
 
-    if(state.flexibleBillingEnabled) {
+    if(state.serviceDisconnectionEnabled) {
 
         financialSection += `
 
-            <div style="
-                margin-top:15px;
-                color:var(--text-muted);
-                font-size:0.85rem;">
+            <div class="modal-event danger">
 
-                💡 <strong>Flexible Billing Rates</strong>
-                is also active.
-
-                The current utility electricity rate is
                 <strong>
-                    $${state.electricityRate}/electron
-                </strong>.
+                    🔌 Service Disconnection policy is active.
+                </strong>
+
+                <br><br>
+
+                ${player.name}'s service will be disconnected
+                because this purchase caused the brownout.
 
             </div>
 
         `;
 
     }
-
-
-    financialSection += `
-
-        <div style="
-            margin-top:15px;
-            color:var(--text-muted);
-            font-size:0.85rem;">
-
-            The brownout still requires the neighborhood
-            to address grid capacity. Grid expansion rules
-            and associated grid fees continue to apply.
-
-        </div>
-
-    `;
 
 
     await showMessage(
@@ -5117,29 +5250,24 @@ async function buyCard(
     cardIndex
 ) {
 
-    if(
-        state.upgradeRequired &&
-        !state.solarPanelSpecialTurn
-    ) {
-
-        await showMessage(
-            "Grid Upgrade Required",
-            "The grid must be upgraded before the next player can purchase a card.",
-            "🔧"
-        );
-
-        return;
-
-    }
-
-
     const p =
         players[pIdx];
 
 
     if(
         !p ||
+        p.disconnected ||
         pIdx !== state.activePlayerIdx
+    ) {
+
+        return;
+
+    }
+
+
+    if(
+        state.upgradeRequired &&
+        !state.solarPanelSpecialTurn
     ) {
 
         return;
@@ -5160,26 +5288,6 @@ async function buyCard(
     if(
         state.solarPanelSpecialTurn &&
         cardType !== "blue"
-    ) {
-
-        return;
-
-    }
-
-
-    if(
-        state.solarPanelSpecialTurn &&
-        !state.solarPanelEligiblePlayers.includes(pIdx)
-    ) {
-
-        return;
-
-    }
-
-
-    if(
-        state.solarPanelSpecialTurn &&
-        state.solarPanelCompletedPlayers.includes(pIdx)
     ) {
 
         return;
@@ -5215,69 +5323,11 @@ async function buyCard(
         deck[cardIndex];
 
 
-    if(!card) return;
-
-
-    if(card.quantity <= 0) {
-
-        await showMessage(
-            "Card Unavailable",
-            "That card is no longer available in the neighborhood card supply.",
-            "🃏"
-        );
-
-        return;
-
-    }
-
-
-    if(p.cash < card.price) {
-
-        await showMessage(
-
-            "Insufficient Funds",
-
-            `
-
-            <strong>${p.name}</strong> does not have enough
-            cash to purchase this card.
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Card Price
-                    </div>
-
-                    <div class="modal-financial-value">
-                        $${card.price.toLocaleString()}
-                    </div>
-
-                </div>
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Available Cash
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:var(--success);">
-
-                        $${p.cash.toLocaleString()}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            `,
-
-            "💰"
-
-        );
+    if(
+        !card ||
+        card.quantity <= 0 ||
+        p.cash < card.price
+    ) {
 
         return;
 
@@ -5309,50 +5359,6 @@ async function buyCard(
     }
 
 
-    let discardPreview = "";
-
-
-    if(selectedDiscardIndex >= 0) {
-
-        const selectedCard =
-            houseCollection[
-                selectedDiscardIndex
-            ];
-
-
-        discardPreview = `
-
-            <div class="modal-event warning">
-
-                <strong>
-                    🗑️ House Space Required
-                </strong>
-
-                <br><br>
-
-                ${selectedCard.id} will be sent to the landfill
-                and returned to the neighborhood board.
-
-                <br><br>
-
-                <span style="
-                    color:var(--text-muted);
-                    font-size:0.85rem;">
-
-                    The discarded card will no longer contribute
-                    to this player's electricity demand, but it
-                    will become available for another player to
-                    purchase again.
-
-                </span>
-
-            </div>
-
-        `;
-
-    }
-
-
     const confirmed =
         await showConfirmation(
 
@@ -5375,9 +5381,6 @@ async function buyCard(
                 <strong>${card.id}</strong>
 
             </div>
-
-
-            ${discardPreview}
 
 
             <div class="modal-financial-grid">
@@ -5410,46 +5413,6 @@ async function buyCard(
 
                 </div>
 
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-
-                        ${
-                            cardType === "yellow"
-                                ? "⚡ Electricity Use"
-                                : "⚡ Electricity Generation"
-                        }
-
-                    </div>
-
-                    <div class="modal-financial-value">
-
-                        ${
-                            cardType === "yellow"
-                                ? `${Math.abs(card.electrons)}e`
-                                : `+${card.electrons}e`
-                        }
-
-                    </div>
-
-                </div>
-
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Cards Remaining
-                    </div>
-
-                    <div class="modal-financial-value">
-
-                        ${card.quantity - 1}
-
-                    </div>
-
-                </div>
-
             </div>
 
             `,
@@ -5463,86 +5426,12 @@ async function buyCard(
         );
 
 
-    if(!confirmed) return;
-
-
-    if(
-        state.solarPanelSpecialTurn &&
-        (
-            cardType !== "blue" ||
-            !state.solarPanelEligiblePlayers.includes(pIdx) ||
-            state.solarPanelCompletedPlayers.includes(pIdx)
-        )
-    ) {
+    if(!confirmed) {
 
         return;
 
     }
 
-
-    if(card.quantity <= 0) {
-
-        await showMessage(
-            "Card No Longer Available",
-            "That card is no longer available in the neighborhood card supply.",
-            "🃏"
-        );
-
-        return;
-
-    }
-
-
-    if(p.cash < card.price) {
-
-        await showMessage(
-            "Insufficient Funds",
-            "The player's available cash is no longer sufficient to complete this purchase.",
-            "💰"
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * Recheck house capacity and validate the selected
-     * discard before running the System Update warning.
-     *
-     * The card is still not discarded at this point.
-     */
-
-    if(houseCollection.length >= houseCapacity) {
-
-        if(
-            selectedDiscardIndex < 0 ||
-            !houseCollection[selectedDiscardIndex]
-        ) {
-
-            await showMessage(
-                "House Space Required",
-                "A card must be discarded before this purchase can be completed.",
-                "🏠"
-            );
-
-            return;
-
-        }
-
-    }
-
-
-    /*
-     * SYSTEM UPDATES FOR CUSTOMERS
-     *
-     * Calculate the projected grid demand before any money,
-     * card supply, happiness, house contents, or demand values
-     * are changed.
-     *
-     * If a warning applies, only the most severe warning
-     * is displayed.
-     */
 
     const systemUpdateApproved =
         await promptSystemUpdateForPurchase(
@@ -5559,12 +5448,6 @@ async function buyCard(
 
     }
 
-
-    /*
-     * Only now, after both the normal purchase confirmation
-     * and any applicable System Update warning have been
-     * accepted, is a selected existing card discarded.
-     */
 
     if(houseCollection.length >= houseCapacity) {
 
@@ -5595,27 +5478,17 @@ async function buyCard(
         );
 
 
-        const electronUse =
+        p.goodsE +=
             Math.abs(card.electrons);
 
-
-        p.goodsE +=
-            electronUse;
 
         p.happiness +=
             card.happiness;
 
+
         p.netE =
             p.solarE -
             p.goodsE;
-
-
-        appendLog(
-            `${p.name} purchased Goods Card ${card.id}. ` +
-            `Paid $${card.price.toLocaleString()}, ` +
-            `used ${electronUse}e, ` +
-            `gained +${card.happiness} happiness.`
-        );
 
 
         const load =
@@ -5632,23 +5505,22 @@ async function buyCard(
                 state.capacity;
 
 
+            const isBlackout =
+                state.brownouts >=
+                state.brownoutLimit;
+
+
             let fineAmount = 0;
 
 
             let payment = {
 
-                cashPaid:0,
-
-                happinessUsed:0,
-
-                totalValue:0
+                happinessUsed:0
 
             };
 
 
-            if(
-                state.systemFinesEnabled
-            ) {
+            if(state.systemFinesEnabled) {
 
                 fineAmount =
                     excess * 50;
@@ -5663,40 +5535,37 @@ async function buyCard(
 
             }
 
-            else {
 
-                appendLog(
-                    `📜 ${p.name} received no system fine ` +
-                    `for exceeding grid capacity by ${excess}e.`
+            updateBrownoutBoxes();
+
+
+            await showBrownoutEvent(
+                p,
+                state.brownouts,
+                excess,
+                fineAmount,
+                payment.happinessUsed || 0
+            );
+
+
+            /*
+             * Service Disconnection occurs after the triggering
+             * purchase and brownout consequences are processed.
+             */
+
+            if(state.serviceDisconnectionEnabled) {
+
+                await disconnectPlayerService(
+                    pIdx,
+                    isBlackout
+                        ? "blackout"
+                        : "brownout"
                 );
 
             }
 
 
-            appendLog(
-                `⚠️ BROWNOUT ${state.brownouts}! ` +
-                `Neighborhood demand reached ${load}e ` +
-                `(Exceeded capacity by ${excess}e).`
-            );
-
-
-            updateBrownoutBoxes();
-
-
-            if(
-                state.brownouts >=
-                state.brownoutLimit
-            ) {
-
-                updateUserInterface();
-
-                await showBrownoutEvent(
-                    p,
-                    state.brownouts,
-                    excess,
-                    fineAmount,
-                    payment.happinessUsed
-                );
+            if(isBlackout) {
 
                 forceEndGame("blackout");
 
@@ -5717,15 +5586,6 @@ async function buyCard(
             updateUserInterface();
 
 
-            await showBrownoutEvent(
-                p,
-                state.brownouts,
-                excess,
-                fineAmount,
-                payment.happinessUsed
-            );
-
-
             await applyGridUpgrade();
 
             return;
@@ -5733,7 +5593,6 @@ async function buyCard(
         }
 
     }
-
 
     else {
 
@@ -5745,20 +5604,14 @@ async function buyCard(
         p.solarE +=
             card.electrons;
 
+
         p.happiness +=
             card.happiness;
+
 
         p.netE =
             p.solarE -
             p.goodsE;
-
-
-        appendLog(
-            `${p.name} purchased Solar Panel Card ${card.id}. ` +
-            `Paid $${card.price.toLocaleString()}, ` +
-            `generated +${card.electrons}e, ` +
-            `gained +${card.happiness} happiness.`
-        );
 
 
         if(
@@ -5800,7 +5653,10 @@ async function buyCard(
     }
 
 
-    if(!state.upgradeRequired) {
+    if(
+        !state.upgradeRequired &&
+        !p.disconnected
+    ) {
 
         state.activePlayerIdx =
             findNextUnfinishedPlayer(
@@ -5816,7 +5672,11 @@ async function buyCard(
     updateUserInterface();
 
 
-    await promptFinishRound(pIdx);
+    if(!p.disconnected) {
+
+        await promptFinishRound(pIdx);
+
+    }
 
 }
 
@@ -5906,12 +5766,6 @@ async function applyGridUpgrade() {
         capacityIncrease === undefined
     ) {
 
-        await showMessage(
-            "No Upgrade Available",
-            "No further grid capacity upgrades are available.",
-            "🔧"
-        );
-
         return;
 
     }
@@ -5923,136 +5777,6 @@ async function applyGridUpgrade() {
             : state.brownouts === 2
                 ? 40
                 : 60;
-
-
-    let upgradeMessage;
-
-
-    if(state.randomized) {
-
-        upgradeMessage = `
-
-            <div class="modal-event warning">
-
-                <strong>
-                    ⚡ Grid capacity must be expanded.
-                </strong>
-
-                <br><br>
-
-                The neighborhood must approve the required
-                grid upgrade before play can continue.
-
-            </div>
-
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Permanent System Fee
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:var(--warning);">
-
-                        +$${currentTierFee}/round
-
-                    </div>
-
-                </div>
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Capacity
-                    </div>
-
-                    <div class="modal-financial-value">
-                        Hidden
-                    </div>
-
-                </div>
-
-            </div>
-
-            `;
-
-    }
-
-    else {
-
-        upgradeMessage = `
-
-            <div class="modal-event warning">
-
-                <strong>
-                    ⚡ Grid capacity must be expanded.
-                </strong>
-
-                <br><br>
-
-                Add
-                <strong>${capacityIncrease} electrons</strong>
-                to the grid?
-
-            </div>
-
-
-            <div class="modal-financial-grid">
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        Current Capacity
-                    </div>
-
-                    <div class="modal-financial-value">
-                        ${state.capacity}e
-                    </div>
-
-                </div>
-
-
-                <div class="modal-financial-item">
-
-                    <div class="modal-financial-label">
-                        New Capacity
-                    </div>
-
-                    <div class="modal-financial-value"
-                         style="color:var(--success);">
-
-                        ${
-                            state.capacity +
-                            capacityIncrease
-                        }e
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            `;
-
-    }
-
-
-    upgradeMessage += `
-
-        <div style="
-            margin-top:15px;
-            color:var(--text-muted);">
-
-            Approving this upgrade permanently adds
-            <strong>$${currentTierFee}/round</strong>
-            to every neighbor's grid fee.
-
-        </div>
-
-    `;
 
 
     const solarEligiblePlayers =
@@ -6094,8 +5818,36 @@ async function applyGridUpgrade() {
             title:
                 "Grid Capacity Upgrade",
 
-            body:
-                upgradeMessage,
+            body:`
+
+                <div class="modal-event warning">
+
+                    <strong>
+                        ⚡ Grid capacity must be expanded.
+                    </strong>
+
+                    <br><br>
+
+                    ${
+                        state.randomized
+                            ? "The required capacity increase remains hidden."
+                            : `Add <strong>${capacityIncrease} electrons</strong> to the grid.`
+                    }
+
+                </div>
+
+
+                <div style="
+                    margin-top:15px;
+                    color:var(--text-muted);">
+
+                    Approving this upgrade permanently adds
+                    <strong>$${currentTierFee}/round</strong>
+                    to every active neighbor's grid fee.
+
+                </div>
+
+            `,
 
             icon:"🔧",
 
@@ -6143,13 +5895,6 @@ async function applyGridUpgrade() {
     }
 
 
-    appendLog(
-        `🔧 Grid capacity upgraded by ${capacityIncrease}e ` +
-        `to ${state.capacity}e. ` +
-        `Added persistent $${currentTierFee}/round fee.`
-    );
-
-
     document.getElementById(
         "upgradeGridBtn"
     ).style.display =
@@ -6160,7 +5905,10 @@ async function applyGridUpgrade() {
         state.activePlayerIdx;
 
 
-    if(startingPoint === -1) {
+    if(
+        startingPoint === -1 ||
+        players[startingPoint]?.disconnected
+    ) {
 
         startingPoint = 0;
 
@@ -6173,34 +5921,9 @@ async function applyGridUpgrade() {
         );
 
 
-    if(
-        state.flexibleBillingEnabled
-    ) {
-
-        evaluateSystemDemand(false);
-
-    }
-
-    else {
-
-        evaluateSystemDemand();
-
-    }
-
+    evaluateSystemDemand(false);
 
     updateUserInterface();
-
-
-    if(state.activePlayerIdx !== -1) {
-
-        const currentPlayerIdx =
-            state.activePlayerIdx;
-
-        await promptFinishRound(
-            currentPlayerIdx
-        );
-
-    }
 
 }
 
@@ -6211,68 +5934,26 @@ async function applyGridUpgrade() {
 
 async function executeRoundEndPayments() {
 
-    if(!allPlayersFinished()) {
-
-        await showMessage(
-
-            "Round Not Complete",
-
-            `
-
-            <div class="modal-event warning">
-
-                <strong>
-                    ⏳ The round cannot be settled yet.
-                </strong>
-
-                <br><br>
-
-                Every player must click
-                <strong>Finish for This Round</strong>
-                before Pay Day and Utility Bills can be processed.
-
-            </div>
-
-            `,
-
-            "🏁"
-
-        );
+    if(
+        !allPlayersFinished() ||
+        state.upgradeRequired
+    ) {
 
         return;
 
     }
 
 
-    if(state.upgradeRequired) {
-
-        await showMessage(
-            "Grid Upgrade Required",
-            "The grid must be upgraded before Pay Day can be processed.",
-            "🔧"
+    const activePlayers =
+        players.filter(
+            p=>!p.disconnected
         );
 
-        return;
 
-    }
-
-
-    appendLog(
-        `--- Executing Round ${state.round} Financial Settlement ---`
-    );
-
-
-    players.forEach(p=>{
+    activePlayers.forEach(p=>{
 
         p.accumulatedHappiness +=
             p.happiness;
-
-
-        appendLog(
-            `${p.name} accumulated ${p.happiness} Happiness Point(s) ` +
-            `for Round ${state.round}. ` +
-            `Accumulated Happiness is now ${p.accumulatedHappiness}.`
-        );
 
     });
 
@@ -6280,7 +5961,7 @@ async function executeRoundEndPayments() {
     const financialEvents = [];
 
 
-    players.forEach(p=>{
+    activePlayers.forEach(p=>{
 
         const payDay = 500;
 
@@ -6309,12 +5990,8 @@ async function executeRoundEndPayments() {
 
         if(surplusPayment > 0) {
 
-            p.cash += surplusPayment;
-
-
-            appendLog(
-                `${p.name} earned $${surplusPayment} for generating surplus power.`
-            );
+            p.cash +=
+                surplusPayment;
 
         }
 
@@ -6391,27 +6068,8 @@ async function executeRoundEndPayments() {
             <br><br>
 
             Pay Day, utility bills, surplus payments,
-            and grid fees have been processed.
-
-            <br><br>
-
-            Each player's current Happiness Index has also
-            been added to their Accumulated Happiness.
-
-            ${
-                state.flexibleBillingEnabled
-                    ? `
-
-                    <br><br>
-
-                    <strong>
-                        Current Utility Rate:
-                        $${state.electricityRate}/electron
-                    </strong>
-
-                    `
-                    : ""
-            }
+            and grid fees have been processed for all
+            active customers.
 
         </div>
 
@@ -6422,11 +6080,6 @@ async function executeRoundEndPayments() {
 
         const p =
             event.player;
-
-
-        const happinessDeductions =
-            event.utilityHappiness +
-            event.gridFeeHappiness;
 
 
         settlementHTML += `
@@ -6449,107 +6102,25 @@ async function executeRoundEndPayments() {
                     margin-top:8px;
                     font-size:0.85rem;">
 
-                    <span>
-                        Pay Day:
-                    </span>
-
+                    <span>Pay Day:</span>
                     <strong style="color:var(--success);">
                         +$${event.payDay.toLocaleString()}
                     </strong>
 
-
-                    ${
-                        event.surplusPayment > 0
-                        ? `
-
-                        <span>
-                            Surplus Income:
-                        </span>
-
-                        <strong style="color:var(--success);">
-                            +$${event.surplusPayment.toLocaleString()}
-                        </strong>
-
-                        `
-                        : ""
-                    }
-
-
-                    ${
-                        state.flexibleBillingEnabled
-                            ? `
-
-                            <span>
-                                Utility Rate:
-                            </span>
-
-                            <strong style="
-                                color:${
-                                    event.utilityRate === 30
-                                        ? "var(--warning)"
-                                        : "var(--text-main)"
-                                };">
-
-                                $${event.utilityRate}/e
-
-                            </strong>
-
-                            `
-                            : ""
-                    }
-
-
-                    <span>
-                        Utility Bill:
-                    </span>
-
+                    <span>Utility Bill:</span>
                     <strong style="color:var(--danger);">
                         -$${event.utilityBill.toLocaleString()}
                     </strong>
 
-
-                    <span>
-                        Grid Fee:
-                    </span>
-
+                    <span>Grid Fee:</span>
                     <strong style="color:var(--danger);">
                         -$${event.gridFee.toLocaleString()}
                     </strong>
 
-
-                    <span>
-                        Happiness Index:
-                    </span>
-
-                    <strong style="color:#a855f7;">
-                        ${p.happiness} 😊
-                    </strong>
-
-
-                    <span>
-                        Accumulated Happiness:
-                    </span>
-
+                    <span>Accumulated Happiness:</span>
                     <strong style="color:#a855f7;">
                         ${p.accumulatedHappiness} pts
                     </strong>
-
-
-                    ${
-                        happinessDeductions > 0
-                        ? `
-
-                        <span>
-                            Happiness Used:
-                        </span>
-
-                        <strong style="color:#a855f7;">
-                            -${happinessDeductions} 😊
-                        </strong>
-
-                        `
-                        : ""
-                    }
 
                 </div>
 
@@ -6576,13 +6147,6 @@ async function executeRoundEndPayments() {
     if(!state.anyPurchases) {
 
         state.stagnantCount += 1;
-
-
-        appendLog(
-            `No grid components bought this round. ` +
-            `Balanced system index counter: ` +
-            `${state.stagnantCount}/4.`
-        );
 
     }
 
@@ -6616,11 +6180,15 @@ async function executeRoundEndPayments() {
     state.anyPurchases = false;
 
 
-    players.forEach(
-        p=>{
+    players.forEach(p=>{
+
+        if(!p.disconnected) {
+
             p.finishedThisRound = false;
+
         }
-    );
+
+    });
 
 
     state.activePlayerIdx =
@@ -6671,12 +6239,15 @@ function createHouseSlotHTML(
             }">
 
             <div class="house-slot-id">
+
                 ${
                     cardType === "goods"
                         ? "🛒"
                         : "☀️"
                 }
+
                 ${card.id}
+
             </div>
 
             <div class="house-slot-details">
@@ -6708,12 +6279,10 @@ function createHouseHTML(p) {
     for(let i=0;i<4;i++) {
 
         goodsSlots.push(
-
             createHouseSlotHTML(
                 p.goodsCards[i],
                 "goods"
             )
-
         );
 
     }
@@ -6725,12 +6294,10 @@ function createHouseHTML(p) {
     for(let i=0;i<2;i++) {
 
         solarSlots.push(
-
             createHouseSlotHTML(
                 p.solarPanels[i],
                 "solar"
             )
-
         );
 
     }
@@ -6753,13 +6320,33 @@ function createHouseHTML(p) {
             </div>
 
 
+            ${
+                p.disconnected
+                    ? `
+
+                    <div class="modal-event danger">
+
+                        <strong>
+                            🔌 Service Disconnected
+                        </strong>
+
+                        <br><br>
+
+                        All Goods cards and Solar Panels were
+                        permanently removed from play.
+
+                    </div>
+
+                    `
+                    : ""
+            }
+
+
             <div class="house-category">
 
                 <div class="house-category-title">
 
-                    <span>
-                        🛒 Goods
-                    </span>
+                    <span>🛒 Goods</span>
 
                     <span>
                         ${p.goodsCards.length} / 4
@@ -6781,9 +6368,7 @@ function createHouseHTML(p) {
 
                 <div class="house-category-title">
 
-                    <span>
-                        ☀️ Solar Panels
-                    </span>
+                    <span>☀️ Solar Panels</span>
 
                     <span>
                         ${p.solarPanels.length} / 2
@@ -6841,15 +6426,6 @@ function updateUserInterface() {
             state.activePlayerIdx;
 
 
-        const isFinished =
-            p.finishedThisRound;
-
-
-        const isSolarPanelLowCash =
-            state.solarPanelSpecialTurn &&
-            p.cash < 2000;
-
-
         const card =
             document.createElement("div");
 
@@ -6857,34 +6433,37 @@ function updateUserInterface() {
         card.className =
             `player-card ${
                 isCurrentTurn &&
-                !isFinished &&
-                !isSolarPanelLowCash
+                !p.disconnected &&
+                !p.finishedThisRound
                     ? "active-turn"
                     : ""
             } ${
-                isFinished ||
-                isSolarPanelLowCash
+                p.finishedThisRound
                     ? "finished-round"
                     : ""
+            } ${
+                p.disconnected
+                    ? "disconnected"
+                    : ""
             }`;
-
-
-        const detailsClass =
-            p.showDetails
-                ? ""
-                : "player-details-hidden";
-
-
-        const toggleText =
-            p.showDetails
-                ? "Hide Player Details"
-                : "Show Player Details";
 
 
         let turnBadge;
 
 
-        if(
+        if(p.disconnected) {
+
+            turnBadge = `
+
+                <span class="turn-badge disconnected">
+                    🔌 Service Disconnected
+                </span>
+
+            `;
+
+        }
+
+        else if(
             state.solarPanelSpecialTurn &&
             isCurrentTurn
         ) {
@@ -6899,7 +6478,7 @@ function updateUserInterface() {
 
         }
 
-        else if(isFinished) {
+        else if(p.finishedThisRound) {
 
             turnBadge = `
 
@@ -6939,7 +6518,39 @@ function updateUserInterface() {
         let gameplayPanel;
 
 
-        if(
+        if(p.disconnected) {
+
+            gameplayPanel = `
+
+                <div class="card-selection">
+
+                    <div class="modal-event danger">
+
+                        <strong>
+                            🔌 Customer Removed from Gameplay
+                        </strong>
+
+                        <br><br>
+
+                        Service was disconnected in Round
+                        ${p.disconnectedRound}.
+
+                        <br><br>
+
+                        Finalized Accumulated Happiness:
+                        <strong>
+                            ${p.accumulatedHappiness} pts
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+        else if(
             state.solarPanelSpecialTurn &&
             isCurrentTurn
         ) {
@@ -6947,35 +6558,6 @@ function updateUserInterface() {
             gameplayPanel = `
 
                 <div class="card-selection">
-
-                    <div class="modal-event success"
-                         style="margin-bottom:15px;">
-
-                        <strong>
-                            ☀️ Solar Panel-only Turn
-                        </strong>
-
-                        <br><br>
-
-                        This special turn is for purchasing
-                        Solar Panel cards only.
-
-                        <br><br>
-
-                        <span style="
-                            color:var(--text-muted);
-                            font-size:0.85rem;">
-
-                            ${
-                                p.solarPanels.length >= 2
-                                    ? "Your Solar Panel slots are full. Purchasing another panel requires discarding one of your current panels."
-                                    : "You have room for another Solar Panel in your house."
-                            }
-
-                        </span>
-
-                    </div>
-
 
                     <button
                         class="no-purchase-button"
@@ -7025,15 +6607,7 @@ function updateUserInterface() {
                                     </div>
 
                                     <div class="card-count">
-
-                                        ${c.quantity}
-                                        card${
-                                            c.quantity===1
-                                                ? ""
-                                                : "s"
-                                        }
-                                        remaining
-
+                                        ${c.quantity} remaining
                                     </div>
 
                                 </button>
@@ -7052,7 +6626,7 @@ function updateUserInterface() {
 
         else if(
             isCurrentTurn &&
-            !isFinished
+            !p.finishedThisRound
         ) {
 
             gameplayPanel = `
@@ -7113,15 +6687,7 @@ function updateUserInterface() {
                                     </div>
 
                                     <div class="card-count">
-
-                                        ${c.quantity}
-                                        card${
-                                            c.quantity===1
-                                                ? ""
-                                                : "s"
-                                        }
-                                        remaining
-
+                                        ${c.quantity} remaining
                                     </div>
 
                                 </button>
@@ -7173,15 +6739,7 @@ function updateUserInterface() {
                                     </div>
 
                                     <div class="card-count">
-
-                                        ${c.quantity}
-                                        card${
-                                            c.quantity===1
-                                                ? ""
-                                                : "s"
-                                        }
-                                        remaining
-
+                                        ${c.quantity} remaining
                                     </div>
 
                                 </button>
@@ -7208,39 +6766,9 @@ function updateUserInterface() {
                     padding:15px;">
 
                     ${
-                        state.solarPanelSpecialTurn
-
-                            ? (
-                                state.solarPanelEligiblePlayers
-                                    .includes(idx)
-
-                                    ? state.solarPanelCompletedPlayers
-                                        .includes(idx)
-
-                                        ? "✓ This player has completed their Solar Panel opportunity."
-
-                                        : "☀️ Waiting for this player's Solar Panel-only turn."
-
-                                    : "This player does not qualify for the Solar Panel-only turn."
-                              )
-
-                            : isFinished
-
-                                ? "✓ This player has finished for this round."
-
-                                : state.upgradeRequired
-
-                                    ? "Grid upgrade required before the next player can take their turn."
-
-                                    : state.activePlayerIdx === -1
-
-                                        ? "All players have finished this round."
-
-                                        : `Waiting for ${
-                                            players[
-                                                state.activePlayerIdx
-                                            ].name
-                                        } to complete their turn.`
+                        p.finishedThisRound
+                            ? "✓ This player has finished for this round."
+                            : "Waiting for the active player."
                     }
 
                 </div>
@@ -7251,7 +6779,8 @@ function updateUserInterface() {
 
 
         const flexibleBillingSummary =
-            state.flexibleBillingEnabled
+            state.flexibleBillingEnabled &&
+            !p.disconnected
                 ? `
 
                 <div class="payment-row">
@@ -7360,12 +6889,20 @@ function updateUserInterface() {
                 class="player-details-toggle"
                 onclick="togglePlayerDetails(${idx})">
 
-                ${toggleText}
+                ${
+                    p.showDetails
+                        ? "Hide Player Details"
+                        : "Show Player Details"
+                }
 
             </button>
 
 
-            <div class="${detailsClass}">
+            <div class="${
+                p.showDetails
+                    ? ""
+                    : "player-details-hidden"
+            }">
 
                 <table class="scorecard-table">
 
@@ -7373,29 +6910,17 @@ function updateUserInterface() {
 
                         <tr>
 
-                            <th>
-                                Wallet Cash
-                            </th>
+                            <th>Wallet Cash</th>
 
-                            <th>
-                                e From Goods (-)
-                            </th>
+                            <th>e From Goods (-)</th>
 
-                            <th>
-                                e From Solar (+)
-                            </th>
+                            <th>e From Solar (+)</th>
 
-                            <th>
-                                Total Net e Balance
-                            </th>
+                            <th>Total Net e Balance</th>
 
-                            <th>
-                                Happiness Index
-                            </th>
+                            <th>Happiness Index</th>
 
-                            <th>
-                                Accumulated Happiness
-                            </th>
+                            <th>Accumulated Happiness</th>
 
                         </tr>
 
@@ -7434,12 +6959,7 @@ function updateUserInterface() {
 
 
                             <td style="
-                                font-weight:bold;
-                                color:${
-                                    p.netE>=0
-                                        ? "var(--success)"
-                                        : "var(--danger)"
-                                };">
+                                font-weight:bold;">
 
                                 ${p.netE} e
 
@@ -7479,16 +6999,6 @@ function updateUserInterface() {
     });
 
 
-    if(state.upgradeRequired) {
-
-        document.getElementById(
-            "upgradeGridBtn"
-        ).style.display =
-            "block";
-
-    }
-
-
     if(state.solarPanelSpecialTurn) {
 
         const currentSolarPlayer =
@@ -7511,11 +7021,14 @@ function updateUserInterface() {
         document.getElementById(
             "turnTrackingText"
         ).innerText =
-            `All players have finished Round ${state.round}. Pay Day is ready.`;
+            `All active players have finished Round ${state.round}. Pay Day is ready.`;
 
     }
 
-    else if(state.activePlayerIdx !== -1) {
+    else if(
+        state.activePlayerIdx !== -1 &&
+        players[state.activePlayerIdx]
+    ) {
 
         document.getElementById(
             "turnTrackingText"
@@ -7643,7 +7156,32 @@ function forceEndGame(condition) {
         subText.innerHTML = `
 
             No components acquired for 4 consecutive rounds.
-            Network parameters stabilized perfectly.
+
+            <br><br>
+
+            <strong>
+                Combined Neighborhood Score:
+                ${groupAccumulatedHappiness}
+                Accumulated Happiness Points
+            </strong>
+
+        `;
+
+    }
+
+
+    else if(condition === "allDisconnected") {
+
+        heading.innerText =
+            "🔌 ALL CUSTOMER SERVICES DISCONNECTED";
+
+        heading.style.color =
+            "var(--danger)";
+
+
+        subText.innerHTML = `
+
+            No active customers remain connected to the grid.
 
             <br><br>
 
@@ -7725,7 +7263,23 @@ function forceEndGame(condition) {
                 #${i+1} ${p.name}
             </strong>
 
-            &mdash;
+            ${
+                p.disconnected
+                    ? `
+
+                    <span style="
+                        color:var(--danger);
+                        font-weight:bold;">
+
+                        — 🔌 Service Disconnected
+
+                    </span>
+
+                    `
+                    : ""
+            }
+
+            <br><br>
 
             Accumulated Happiness Score:
 
@@ -7749,11 +7303,26 @@ function forceEndGame(condition) {
 
             </span>
 
-            |
+            <br>
 
             Final Liquidity Wallet:
 
             $${p.cash.toLocaleString()}
+
+            ${
+                p.disconnected
+                    ? `
+
+                    <br>
+
+                    Score finalized in Round:
+                    <strong>
+                        ${p.disconnectedRound}
+                    </strong>
+
+                    `
+                    : ""
+            }
 
         `;
 
