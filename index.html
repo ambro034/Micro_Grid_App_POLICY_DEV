@@ -349,7 +349,6 @@ button {
 button:hover {
 
     opacity: 0.9;
-
 }
 
 
@@ -1788,6 +1787,16 @@ onclick="toggleGamePolicy('flexibleBilling')">
 
 </button>
 
+
+<button
+id="systemUpdatesPolicyButton"
+class="mode-button"
+onclick="toggleGamePolicy('systemUpdates')">
+
+📢 System Updates for Customers
+
+</button>
+
 </div>
 
 
@@ -1800,8 +1809,8 @@ color:var(--text-muted);">
 
 <br><br>
 
-System Fines and Flexible Billing may be selected
-individually or together.
+System Fines, Flexible Billing, and System Updates
+may be selected individually or in any combination.
 
 </div>
 
@@ -2109,6 +2118,8 @@ let state = {
     systemFinesEnabled:false,
 
     flexibleBillingEnabled:false,
+
+    systemUpdatesEnabled:false,
 
     electricityRate:20,
 
@@ -2497,6 +2508,495 @@ function evaluateFlexibleBilling(
         }
 
     }
+
+}
+
+
+/* ============================================================
+   SYSTEM UPDATE HELPERS
+   ============================================================ */
+
+function getCurrentSystemLoad() {
+
+    let currentLoad = 0;
+
+
+    players.forEach(p=>{
+
+        currentLoad += p.goodsE;
+
+        currentLoad -= p.solarE;
+
+    });
+
+
+    return currentLoad;
+
+}
+
+
+function getProjectedSystemLoad(
+    p,
+    cardType,
+    card,
+    selectedDiscardIndex
+) {
+
+    let projectedLoad =
+        getCurrentSystemLoad();
+
+
+    if(cardType === "yellow") {
+
+        if(
+            selectedDiscardIndex >= 0 &&
+            p.goodsCards[
+                selectedDiscardIndex
+            ]
+        ) {
+
+            projectedLoad -=
+                Math.abs(
+                    p.goodsCards[
+                        selectedDiscardIndex
+                    ].electrons
+                );
+
+        }
+
+
+        projectedLoad +=
+            Math.abs(card.electrons);
+
+    }
+
+    else {
+
+        if(
+            selectedDiscardIndex >= 0 &&
+            p.solarPanels[
+                selectedDiscardIndex
+            ]
+        ) {
+
+            projectedLoad +=
+                p.solarPanels[
+                    selectedDiscardIndex
+                ].electrons;
+
+        }
+
+
+        projectedLoad -=
+            card.electrons;
+
+    }
+
+
+    return projectedLoad;
+
+}
+
+
+async function promptSystemUpdateForPurchase(
+    p,
+    cardType,
+    card,
+    selectedDiscardIndex
+) {
+
+    if(
+        !state.systemUpdatesEnabled
+    ) {
+
+        return true;
+
+    }
+
+
+    const currentLoad =
+        getCurrentSystemLoad();
+
+
+    const projectedLoad =
+        getProjectedSystemLoad(
+            p,
+            cardType,
+            card,
+            selectedDiscardIndex
+        );
+
+
+    /*
+     * System Updates are intended to warn players when
+     * their purchase increases pressure on the grid.
+     *
+     * A purchase that lowers or leaves demand unchanged
+     * does not generate an alert.
+     */
+
+    if(projectedLoad <= currentLoad) {
+
+        return true;
+
+    }
+
+
+    let warningType = null;
+
+    let title = "";
+
+    let icon = "📢";
+
+    let message = "";
+
+    let confirmClass = "warning";
+
+
+    /*
+     * Only the most severe applicable warning is shown.
+     *
+     * Priority:
+     * 1. Blackout
+     * 2. Brownout
+     * 3. Within 5e
+     * 4. Within 10e
+     */
+
+    if(projectedLoad > state.capacity) {
+
+        const projectedBrownoutNumber =
+            state.brownouts + 1;
+
+
+        if(
+            projectedBrownoutNumber >=
+            state.brownoutLimit
+        ) {
+
+            warningType = "blackout";
+
+            title =
+                "🚨 System Update: Blackout Warning";
+
+            icon = "🚨";
+
+            confirmClass = "danger";
+
+
+            message = `
+
+                <div class="modal-event danger">
+
+                    <strong>
+                        This purchase will cause a BLACKOUT.
+                    </strong>
+
+                    <br><br>
+
+                    Current neighborhood demand:
+                    <strong>${currentLoad}e</strong>
+
+                    <br>
+
+                    Projected demand after purchase:
+                    <strong>${projectedLoad}e</strong>
+
+                    <br>
+
+                    Grid capacity:
+                    <strong>${state.capacity}e</strong>
+
+                </div>
+
+
+                <div style="
+                    margin-top:15px;
+                    color:var(--text-muted);">
+
+                    This purchase would exceed grid capacity
+                    by
+
+                    <strong>
+                        ${projectedLoad - state.capacity}e
+                    </strong>
+
+                    and trigger
+                    <strong>
+                        Brownout ${projectedBrownoutNumber}
+                    </strong>.
+
+                    <br><br>
+
+                    Because the neighborhood's blackout limit
+                    is ${state.brownoutLimit}, completing this
+                    purchase will cause a
+                    <strong>system blackout and end the game</strong>.
+
+                    <br><br>
+
+                    Would you like to complete the purchase?
+
+                </div>
+
+            `;
+
+        }
+
+        else {
+
+            warningType = "brownout";
+
+            title =
+                "⚠️ System Update: Brownout Warning";
+
+            icon = "⚠️";
+
+            confirmClass = "warning";
+
+
+            message = `
+
+                <div class="modal-event danger">
+
+                    <strong>
+                        This purchase will cause a BROWNOUT.
+                    </strong>
+
+                    <br><br>
+
+                    Current neighborhood demand:
+                    <strong>${currentLoad}e</strong>
+
+                    <br>
+
+                    Projected demand after purchase:
+                    <strong>${projectedLoad}e</strong>
+
+                    <br>
+
+                    Grid capacity:
+                    <strong>${state.capacity}e</strong>
+
+                </div>
+
+
+                <div style="
+                    margin-top:15px;
+                    color:var(--text-muted);">
+
+                    This purchase would exceed grid capacity
+                    by
+
+                    <strong>
+                        ${projectedLoad - state.capacity}e
+                    </strong>.
+
+                    <br><br>
+
+                    Completing the purchase will trigger
+                    <strong>
+                        Brownout ${projectedBrownoutNumber}
+                    </strong>
+
+                    and require the neighborhood to address
+                    grid capacity before normal play continues.
+
+                    <br><br>
+
+                    Would you like to complete the purchase?
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+    else if(
+        projectedLoad >=
+        state.capacity - 5
+    ) {
+
+        warningType = "within5";
+
+        title =
+            "⚠️ System Update: High Grid Demand";
+
+        icon = "⚠️";
+
+        confirmClass = "warning";
+
+
+        message = `
+
+            <div class="modal-event warning">
+
+                <strong>
+                    This purchase will put the neighborhood
+                    within 5 electrons of grid capacity.
+                </strong>
+
+                <br><br>
+
+                Current neighborhood demand:
+                <strong>${currentLoad}e</strong>
+
+                <br>
+
+                Projected demand after purchase:
+                <strong>${projectedLoad}e</strong>
+
+                <br>
+
+                Grid capacity:
+                <strong>${state.capacity}e</strong>
+
+            </div>
+
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);">
+
+                Only
+
+                <strong>
+                    ${state.capacity - projectedLoad}e
+                </strong>
+
+                of unused grid capacity will remain.
+
+                <br><br>
+
+                Would you like to complete the purchase?
+
+            </div>
+
+        `;
+
+    }
+
+    else if(
+        projectedLoad >=
+        state.capacity - 10
+    ) {
+
+        warningType = "within10";
+
+        title =
+            "📢 System Update: Grid Capacity Notice";
+
+        icon = "📢";
+
+        confirmClass = "primary";
+
+
+        message = `
+
+            <div class="modal-event warning">
+
+                <strong>
+                    This purchase will put the neighborhood
+                    within 10 electrons of grid capacity.
+                </strong>
+
+                <br><br>
+
+                Current neighborhood demand:
+                <strong>${currentLoad}e</strong>
+
+                <br>
+
+                Projected demand after purchase:
+                <strong>${projectedLoad}e</strong>
+
+                <br>
+
+                Grid capacity:
+                <strong>${state.capacity}e</strong>
+
+            </div>
+
+
+            <div style="
+                margin-top:15px;
+                color:var(--text-muted);">
+
+                After the purchase,
+
+                <strong>
+                    ${state.capacity - projectedLoad}e
+                </strong>
+
+                of unused grid capacity will remain.
+
+                <br><br>
+
+                Would you like to complete the purchase?
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(!warningType) {
+
+        return true;
+
+    }
+
+
+    const proceed =
+        await openGameModal({
+
+            title,
+
+            icon,
+
+            body:message,
+
+            buttons:[
+
+                {
+                    text:"Cancel Purchase",
+                    className:"secondary",
+                    value:false
+                },
+
+                {
+                    text:"Complete Purchase",
+                    className:confirmClass,
+                    value:true
+                }
+
+            ]
+
+        });
+
+
+    if(!proceed) {
+
+        appendLog(
+            `📢 ${p.name} cancelled the purchase of ${card.id} ` +
+            `after receiving a System Update warning.`
+        );
+
+        return false;
+
+    }
+
+
+    appendLog(
+        `📢 ${p.name} acknowledged the System Update warning ` +
+        `and chose to complete the purchase of ${card.id}.`
+    );
+
+
+    return true;
 
 }
 
@@ -3071,7 +3571,9 @@ let selectedGamePolicies = {
 
     systemFines:false,
 
-    flexibleBilling:false
+    flexibleBilling:false,
+
+    systemUpdates:false
 
 };
 
@@ -3093,10 +3595,16 @@ function updateGamePolicyButtons() {
             "flexibleBillingPolicyButton"
         );
 
+    const systemUpdatesButton =
+        document.getElementById(
+            "systemUpdatesPolicyButton"
+        );
+
 
     const noPoliciesActive =
         !selectedGamePolicies.systemFines &&
-        !selectedGamePolicies.flexibleBilling;
+        !selectedGamePolicies.flexibleBilling &&
+        !selectedGamePolicies.systemUpdates;
 
 
     noPoliciesButton.classList.toggle(
@@ -3116,6 +3624,12 @@ function updateGamePolicyButtons() {
         selectedGamePolicies.flexibleBilling
     );
 
+
+    systemUpdatesButton.classList.toggle(
+        "selected",
+        selectedGamePolicies.systemUpdates
+    );
+
 }
 
 
@@ -3125,6 +3639,9 @@ function setNoPolicies() {
         false;
 
     selectedGamePolicies.flexibleBilling =
+        false;
+
+    selectedGamePolicies.systemUpdates =
         false;
 
 
@@ -3142,11 +3659,17 @@ function toggleGamePolicy(policy) {
 
     }
 
-
     else if(policy === "flexibleBilling") {
 
         selectedGamePolicies.flexibleBilling =
             !selectedGamePolicies.flexibleBilling;
+
+    }
+
+    else if(policy === "systemUpdates") {
+
+        selectedGamePolicies.systemUpdates =
+            !selectedGamePolicies.systemUpdates;
 
     }
 
@@ -3687,6 +4210,10 @@ async function commenceGridSimulation() {
         selectedGamePolicies.flexibleBilling;
 
 
+    state.systemUpdatesEnabled =
+        selectedGamePolicies.systemUpdates;
+
+
     state.electricityRate = 20;
 
     state.highDemandActive = false;
@@ -3755,7 +4282,8 @@ async function commenceGridSimulation() {
 
     if(
         !state.systemFinesEnabled &&
-        !state.flexibleBillingEnabled
+        !state.flexibleBillingEnabled &&
+        !state.systemUpdatesEnabled
     ) {
 
         appendLog(
@@ -3787,6 +4315,15 @@ async function commenceGridSimulation() {
         }
 
 
+        if(state.systemUpdatesEnabled) {
+
+            activePolicies.push(
+                "System Updates for Customers"
+            );
+
+        }
+
+
         appendLog(
             `Game Policies Active: ${
                 activePolicies.join(" + ")
@@ -3800,6 +4337,17 @@ async function commenceGridSimulation() {
                 "Flexible Billing: Utility electricity costs $20/e normally " +
                 "and rises to $30/e when neighborhood demand comes within " +
                 "10e of grid capacity."
+            );
+
+        }
+
+
+        if(state.systemUpdatesEnabled) {
+
+            appendLog(
+                "System Updates for Customers: Players will receive a warning " +
+                "before purchases that increase demand to within 10e or 5e " +
+                "of capacity, or would cause a brownout or blackout."
             );
 
         }
@@ -3840,16 +4388,8 @@ function evaluateSystemDemand(
     allowHighDemandTrigger = true
 ) {
 
-    let currentLoad = 0;
-
-
-    players.forEach(p=>{
-
-        currentLoad += p.goodsE;
-
-        currentLoad -= p.solarE;
-
-    });
+    const currentLoad =
+        getCurrentSystemLoad();
 
 
     document.getElementById(
@@ -4966,6 +5506,13 @@ async function buyCard(
     }
 
 
+    /*
+     * Recheck house capacity and validate the selected
+     * discard before running the System Update warning.
+     *
+     * The card is still not discarded at this point.
+     */
+
     if(houseCollection.length >= houseCapacity) {
 
         if(
@@ -4983,6 +5530,43 @@ async function buyCard(
 
         }
 
+    }
+
+
+    /*
+     * SYSTEM UPDATES FOR CUSTOMERS
+     *
+     * Calculate the projected grid demand before any money,
+     * card supply, happiness, house contents, or demand values
+     * are changed.
+     *
+     * If a warning applies, only the most severe warning
+     * is displayed.
+     */
+
+    const systemUpdateApproved =
+        await promptSystemUpdateForPurchase(
+            p,
+            cardType,
+            card,
+            selectedDiscardIndex
+        );
+
+
+    if(!systemUpdateApproved) {
+
+        return;
+
+    }
+
+
+    /*
+     * Only now, after both the normal purchase confirmation
+     * and any applicable System Update warning have been
+     * accepted, is a selected existing card discarded.
+     */
+
+    if(houseCollection.length >= houseCapacity) {
 
         discardHouseCard(
             p,
@@ -5176,14 +5760,6 @@ async function buyCard(
             `gained +${card.happiness} happiness.`
         );
 
-
-        /*
-         * Flexible Billing:
-         * A Solar Panel purchase resets the electricity rate
-         * to the normal $20/e. The demand calculation is then
-         * refreshed without immediately retriggering high-demand
-         * pricing from this same Solar Panel transaction.
-         */
 
         if(
             state.flexibleBillingEnabled
@@ -5556,13 +6132,6 @@ async function applyGridUpgrade() {
     state.upgradeRequired = false;
 
 
-    /*
-     * Flexible Billing:
-     * A completed capacity expansion resets the utility rate
-     * to the normal $20/e. The new capacity is displayed without
-     * immediately retriggering high-demand pricing.
-     */
-
     if(
         state.flexibleBillingEnabled
     ) {
@@ -5715,14 +6284,6 @@ async function executeRoundEndPayments() {
 
         const payDay = 500;
 
-
-        /*
-         * Flexible Billing only changes the price charged
-         * for electricity consumption.
-         *
-         * Surplus electricity income remains at the game's
-         * existing $20 per electron.
-         */
 
         const utilityRate =
             state.flexibleBillingEnabled
